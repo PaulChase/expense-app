@@ -1,11 +1,9 @@
 import { StyleSheet, Text, View } from "react-native";
-import Home from "./app/HomeScreen";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { NavigationContainer, useNavigationContainerRef } from "@react-navigation/native";
 import { Feather, Ionicons, FontAwesome5, Entypo, MaterialIcons, MaterialCommunityIcons } from "@expo/vector-icons";
-
-import HomeScreen from "./app/HomeScreen";
-import CategoriesScreen from "./app/CategoriesScreen";
+import HomeScreen from "./app/Screens/HomeScreen";
+import CategoriesScreen from "./app/Screens/CategoriesScreen";
 
 const Tab = createBottomTabNavigator();
 
