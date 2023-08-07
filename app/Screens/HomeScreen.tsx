@@ -1,33 +1,19 @@
 import React, { useEffect, useState } from "react";
-import { Pressable, SafeAreaView, ScrollView, Text, View } from "react-native";
+import { Pressable, SafeAreaView, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import TabButton from "../Components/TabButton";
 import TransactionItem from "../Components/TransactionItem";
 import { formatNumberInThousand } from "../utils/helpers";
-import SmsAndroid from "react-native-get-sms-android";
+import * as SQLite from "expo-sqlite";
+import { Feather, Ionicons, FontAwesome5, Entypo, MaterialIcons, MaterialCommunityIcons } from "@expo/vector-icons";
+import AddExpenseModal from "../Components/Modals/AddExpenseModal";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 /* List SMS messages matching the filter */
 const filter = {
 	box: "inbox", // 'inbox' (default), 'sent', 'draft', 'outbox', 'failed', 'queued', and '' for all
 
-	/**
-	 *  the next 3 filters can work together, they are AND-ed
-	 *
-	 *  minDate, maxDate filters work like this:
-	 *    - If and only if you set a maxDate, it's like executing this SQL query:
-	 *    "SELECT * from messages WHERE (other filters) AND date <= maxDate"
-	 *    - Same for minDate but with "date >= minDate"
-	 */
 	minDate: 1554636310165, // timestamp (in milliseconds since UNIX epoch)
-	// maxDate: 1556277910456,
-	// bodyRegex: "(.*)How are you(.*)",
 
-	/** the next 5 filters should NOT be used together, they are OR-ed so pick one **/
-	// read: 1, // 0 for unread SMS, 1 for SMS already read
-	// _id: 1234, // specify the msg id
-	// thread_id: 12, // specify the conversation thread_id
-	// address: "+1888------",
-	// body: "How are you",
-	/** the next 2 filters can be used for pagination **/
 	indexFrom: 0, // start from index 0
 	maxCount: 50, // count of SMS to return each time
 	address: "UBA",
@@ -81,79 +67,228 @@ const getBalance = (message: string) => {
 	}
 };
 
+interface TransactionMessage {
+	id: number;
+	amount: number;
+	type: string;
+	date: string;
+	category: string;
+}
+
+export interface AddExpenseProps {
+	amount: string;
+	category: string;
+}
+
+const db = SQLite.openDatabase("data.db");
+
+db.transaction((tx) => {
+	db.exec(
+		[
+			{
+				sql: "CREATE TABLE IF NOT EXISTS transactions (id INTEGER PRIMARY KEY AUTOINCREMENT, amount FLOAT NOT NULL, type VARCHAR(255) NOT NULL, category VARCHAR(255), date DATETIME NOT NULL)",
+				args: [],
+			},
+		],
+		false,
+		(error, results) => console.log("done")
+	);
+});
+
 export default function HomeScreen() {
 	const [activeTab, setActiveTab] = useState<string>("all");
-	const [messages, setMessages] = useState([]);
-	const [balance, setBalance] = useState<string | null>("0");
+	const [transactions, setTransactions] = useState<TransactionMessage[]>([]);
+	const [balance, setBalance] = useState<number | null>(13500);
+	const [showAddExpenseModal, setShowAddExpenseModal] = useState<boolean>(false);
+	const [categories, setCategories] = useState<string[]>([]);
 
 	const handleChangeTab = (tab: string) => {
 		setActiveTab(tab);
 	};
 
+	// get categories count from storage
 	useEffect(() => {
-		SmsAndroid.list(
-			JSON.stringify(filter),
-			(fail) => {
-				console.log("Failed with this error: " + fail);
+		let isMounted = true;
+
+		const getCategoriesFromStorage = async () => {
+			try {
+				const value = await AsyncStorage.getItem("categories");
+				if (value !== null && isMounted) {
+					setCategories(JSON.parse(value));
+				} else if (value === null && isMounted) {
+					// this will run for the 1st time
+					setCategories([
+						"Food",
+						"Health",
+						"Transport",
+						"Entertainment",
+						"Fashion",
+						"Education",
+						"Utility",
+						"Shopping",
+						"Personal Care",
+						"Bills",
+						"Investments",
+					]);
+				}
+			} catch (e) {
+				alert("couldnt get categories ");
+			}
+		};
+
+		getCategoriesFromStorage();
+
+		return () => {
+			isMounted = false;
+		};
+	}, []);
+
+	// set the categories  in storage after its value changes
+	useEffect(() => {
+		const updateCategoriesInStorage = async () => {
+			try {
+				await AsyncStorage.setItem("categories", JSON.stringify(categories));
+			} catch (error) {
+				alert(error);
+			}
+		};
+
+		updateCategoriesInStorage();
+	}, [categories]);
+
+	useEffect(() => {
+		db.transaction((tx) => {
+			db.exec(
+				[
+					{
+						sql: "SELECT * FROM transactions",
+						args: [],
+					},
+				],
+				false,
+				(error, results) => setTransactions(results[0].rows)
+			);
+		});
+	}, []);
+
+	const test = async () => {
+		// db.transaction((tx) => {
+		// 	db.exec(
+		// 		[
+		// 			{
+		// 				sql: "DROP TABLE IF EXISTS transactions",
+		// 				args: [],
+		// 			},
+		// 		],
+		// 		false,
+		// 		(error, results) => console.log("table dropeed")
+		// 	);
+		// });
+		// const value = await AsyncStorage.getItem("categories");
+		// console.log(JSON.parse(value));
+		// console.log();
+	};
+
+	const toggleAddExpenseModal = () => setShowAddExpenseModal((prev) => !prev);
+
+	const handleAddExpense = (expense: AddExpenseProps) => {
+		db.transaction(
+			(tx) => {
+				db.exec(
+					[
+						{
+							sql: "INSERT INTO transactions (amount, type, category, date) VALUES (?, ?, ?, ?)",
+							args: [parseInt(expense.amount), "expense", expense.category, new Date().toISOString().split("T")[0]],
+						},
+					],
+					false,
+					(error, results) => {
+						setTransactions((prev) => [
+							{
+								id: results[0].insertId,
+								amount: parseInt(expense.amount),
+								type: "expense",
+								category: expense.category,
+								date: new Date().toISOString().split("T")[0],
+							},
+							...prev,
+						]);
+					}
+				);
 			},
-			(count, smsList) => {
-				console.log("Count: ", count);
-				// console.log("List: ", smsList);
-				const messages = JSON.parse(smsList);
-
-				const recentBalance = getBalance(messages[0].body);
-
-				const mainData = messages
-					.filter((msg: any) => msg.body.startsWith("Txn:"))
-					.map((msg: any) => {
-						const type = msg.body.startsWith("Txn: Credit") ? "Credit" : "Debit";
-						const amount = getAmount(msg.body);
-						const date = formateDate(msg.date);
-
-						return { type, amount, date };
-					});
-				setBalance(recentBalance);
-				setMessages(mainData);
-
-				// arr.forEach(function (object) {
-				// 	// console.log("Object: " + object);
-				// 	console.log("-->" + object._id);
-				// 	console.log("-->" + object.date);
-				// 	console.log("-->" + object.address);
-				// 	console.log("-->" + object.body);
-				// });
+			(error) => alert(error),
+			() => {
+				setBalance((prev) => parseInt(prev) - parseInt(expense.amount));
+				toggleAddExpenseModal();
 			}
 		);
-	}, []);
+	};
 
 	return (
 		<SafeAreaView>
-			<ScrollView className=" p-4 pb-20">
-				<View className=" p-3 bg-white border-l-4 border-blue-700 rounded-md">
-					<Text>Balance</Text>
-					<Text className=" text-3xl text-blue-700 font-bold mt-2">₦ {formatNumberInThousand(balance)}</Text>
-				</View>
-
-				<Text className=" font-semibold mt-6 text-lg">Transactions</Text>
-
-				<View className=" flex flex-row items-center space-x-4 mt-2 mb-3">
-					<TabButton activeTab={activeTab} tab={"all"} handleChangeTab={handleChangeTab} text={"All"} />
-					<TabButton activeTab={activeTab} tab={"income"} handleChangeTab={handleChangeTab} text={"Income"} />
-				</View>
-
-				{activeTab === "all" && (
-					<View className=" pb-20">
-						{messages.map((msg, index) => (
-							<TransactionItem message={msg} key={index} />
-						))}
+			<View className=" relative">
+				<ScrollView className=" p-4 pb-20 min-h-screen">
+					<View className=" p-3 bg-white border-l-4 border-blue-700 rounded-md">
+						<Text>Balance</Text>
+						<Text className=" text-3xl text-blue-700 font-extrabold mt-2">₦ {formatNumberInThousand(balance)}</Text>
 					</View>
-				)}
-				{activeTab === "income" && (
-					<View>
-						<Text>All Income</Text>
+
+					<View className="flex flex-row justify-between  items-center mt-6">
+						<Text className=" font-semibold  text-lg">Transactions</Text>
+						<Pressable onPress={test}>
+							<Ionicons name="reload" size={20} color="gray" />
+						</Pressable>
 					</View>
-				)}
-			</ScrollView>
+
+					<View className=" flex flex-row items-center space-x-4 mt-2 mb-3">
+						<TabButton activeTab={activeTab} tab={"all"} handleChangeTab={handleChangeTab} text={"All"} />
+						<TabButton activeTab={activeTab} tab={"income"} handleChangeTab={handleChangeTab} text={"Income"} />
+					</View>
+
+					{activeTab === "all" && (
+						<View className=" pb-20">
+							{transactions.map((transaction, index) => (
+								<TransactionItem transaction={transaction} key={transaction.id} />
+							))}
+						</View>
+					)}
+					{activeTab === "income" && (
+						<View>
+							<Text>All Income</Text>
+						</View>
+					)}
+				</ScrollView>
+
+				{/* floting buttons */}
+				<View
+					style={{ elevation: 10 }}
+					className=" flex flex-row items-center justify-evenly absolute left-0 bottom-5 w-full z-50 pb-32"
+				>
+					<TouchableOpacity
+						activeOpacity={0.7}
+						className=" bg-green-700 h-16 w-16 flex items-center justify-center rounded-full"
+					>
+						<FontAwesome5 name="plus" size={20} color="white" />
+					</TouchableOpacity>
+
+					<TouchableOpacity
+						activeOpacity={0.7}
+						onPress={toggleAddExpenseModal}
+						className=" bg-red-700 h-16 w-16 flex items-center justify-center rounded-full"
+					>
+						<FontAwesome5 name="minus" size={20} color="white" />
+					</TouchableOpacity>
+				</View>
+			</View>
+
+			{showAddExpenseModal && (
+				<AddExpenseModal
+					showModal={showAddExpenseModal}
+					closeModal={toggleAddExpenseModal}
+					categories={categories}
+					addExpense={handleAddExpense}
+				/>
+			)}
 		</SafeAreaView>
 	);
 }

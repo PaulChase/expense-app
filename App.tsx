@@ -28,9 +28,9 @@ export default function App() {
 					},
 					tabBarStyle: {
 						paddingVertical: 10,
-						height: 62,
+						height: 60,
 						// backgroundColor: colorScheme === "dark" ? "black" : "#bfbfbf",
-						borderTopWidth: 2,
+						borderTopWidth: 1,
 						borderTopColor: "gray",
 					},
 					headerShown: true,
