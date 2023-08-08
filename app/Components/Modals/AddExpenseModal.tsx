@@ -2,7 +2,7 @@ import React, { useContext, useState } from "react";
 import { Modal, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import RNPickerSelect from "react-native-picker-select";
-import { AddExpenseProps } from "../../Screens/HomeScreen";
+import { AddExpenseProps } from "../../utils/types";
 
 interface AddExpenseModalProps {
 	showModal: boolean;

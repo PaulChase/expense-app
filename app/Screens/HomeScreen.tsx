@@ -7,78 +7,8 @@ import * as SQLite from "expo-sqlite";
 import { Feather, Ionicons, FontAwesome5, Entypo, MaterialIcons, MaterialCommunityIcons } from "@expo/vector-icons";
 import AddExpenseModal from "../Components/Modals/AddExpenseModal";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-
-/* List SMS messages matching the filter */
-const filter = {
-	box: "inbox", // 'inbox' (default), 'sent', 'draft', 'outbox', 'failed', 'queued', and '' for all
-
-	minDate: 1554636310165, // timestamp (in milliseconds since UNIX epoch)
-
-	indexFrom: 0, // start from index 0
-	maxCount: 50, // count of SMS to return each time
-	address: "UBA",
-};
-
-const getAmount = (msg: string) => {
-	// Regular expression to match the amount
-	const amountRegex = /Amt:NGN\s*([\d,\.]+)/;
-
-	// Extract the amount using the regular expression
-	const match = msg.match(amountRegex);
-
-	if (match && match[1]) {
-		const amount = match[1].replace(/,/g, ""); // Remove commas from the amount
-		return amount;
-	} else {
-		return null;
-	}
-};
-
-const formateDate = (theDate: number) => {
-	// Create a new Date object using the timestamp
-	const date = new Date(theDate);
-
-	// Extract the various components of the date
-	const year = date.getFullYear();
-	const month = date.getMonth() + 1; // Month is 0-indexed, so add 1
-	const day = date.getDate();
-	const hours = date.getHours();
-	const minutes = date.getMinutes();
-	const seconds = date.getSeconds();
-
-	// Create a formatted date string
-	const formattedDate = `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-
-	return formattedDate;
-};
-
-const getBalance = (message: string) => {
-	// Regular expression to match the balance
-	const balanceRegex = /Bal:NGN\s*([\d,\.]+)/;
-
-	// Extract the balance using the regular expression
-	const match = message.match(balanceRegex);
-
-	if (match && match[1]) {
-		const balance = match[1].replace(/,/g, ""); // Remove commas from the balance
-		return balance; // Output: Balance: 27248.39
-	} else {
-		return null;
-	}
-};
-
-interface TransactionMessage {
-	id: number;
-	amount: number;
-	type: string;
-	date: string;
-	category: string;
-}
-
-export interface AddExpenseProps {
-	amount: string;
-	category: string;
-}
+import AddIncomeModal from "../Components/Modals/AddIncomeModal";
+import { AddExpenseProps, AddIncomeProps, TransactionItem as TransactionItemType } from "../utils/types";
 
 const db = SQLite.openDatabase("data.db");
 
@@ -97,9 +27,10 @@ db.transaction((tx) => {
 
 export default function HomeScreen() {
 	const [activeTab, setActiveTab] = useState<string>("all");
-	const [transactions, setTransactions] = useState<TransactionMessage[]>([]);
-	const [balance, setBalance] = useState<number | null>(13500);
+	const [transactions, setTransactions] = useState<TransactionItemType[]>([]);
+	const [balance, setBalance] = useState<number>(0);
 	const [showAddExpenseModal, setShowAddExpenseModal] = useState<boolean>(false);
+	const [showAddIncomeModal, setShowAddIncomeModal] = useState<boolean>(false);
 	const [categories, setCategories] = useState<string[]>([]);
 
 	const handleChangeTab = (tab: string) => {
@@ -156,12 +87,50 @@ export default function HomeScreen() {
 		updateCategoriesInStorage();
 	}, [categories]);
 
+	// get balance count from storage
+	useEffect(() => {
+		let isMounted = true;
+
+		const getBalanceFromStorage = async () => {
+			try {
+				const value = await AsyncStorage.getItem("balance");
+				if (value !== null && isMounted) {
+					setBalance(parseInt(value));
+				} else if (value === null && isMounted) {
+					// this will run for the 1st time
+					setBalance(0);
+				}
+			} catch (e) {
+				alert("couldnt get balance ");
+			}
+		};
+
+		getBalanceFromStorage();
+
+		return () => {
+			isMounted = false;
+		};
+	}, []);
+
+	// set the balance  in storage after its value changes
+	useEffect(() => {
+		const updateBalanceInStorage = async () => {
+			try {
+				await AsyncStorage.setItem("balance", balance.toString());
+			} catch (error) {
+				alert(error);
+			}
+		};
+
+		updateBalanceInStorage();
+	}, [balance]);
+
 	useEffect(() => {
 		db.transaction((tx) => {
 			db.exec(
 				[
 					{
-						sql: "SELECT * FROM transactions",
+						sql: "SELECT * FROM transactions ORDER BY id DESC",
 						args: [],
 					},
 				],
@@ -184,12 +153,13 @@ export default function HomeScreen() {
 		// 		(error, results) => console.log("table dropeed")
 		// 	);
 		// });
-		// const value = await AsyncStorage.getItem("categories");
-		// console.log(JSON.parse(value));
-		// console.log();
+
+		console.log("done");
 	};
 
 	const toggleAddExpenseModal = () => setShowAddExpenseModal((prev) => !prev);
+
+	const toggleAddIncomeModal = () => setShowAddIncomeModal((prev) => !prev);
 
 	const handleAddExpense = (expense: AddExpenseProps) => {
 		db.transaction(
@@ -224,39 +194,59 @@ export default function HomeScreen() {
 		);
 	};
 
+	const handleAddIncome = (income: AddIncomeProps) => {
+		db.transaction(
+			(tx) => {
+				db.exec(
+					[
+						{
+							sql: "INSERT INTO transactions (amount, type, date) VALUES (?, ?, ?)",
+							args: [parseInt(income.amount), "income", new Date().toISOString().split("T")[0]],
+						},
+					],
+					false,
+					(error, results) => {
+						setTransactions((prev) => [
+							{
+								id: results[0].insertId,
+								amount: parseInt(income.amount),
+								type: "income",
+								date: new Date().toISOString().split("T")[0],
+							},
+							...prev,
+						]);
+					}
+				);
+			},
+			(error) => alert(error),
+			() => {
+				setBalance((prev) => parseInt(prev) + parseInt(income.amount));
+				toggleAddIncomeModal();
+			}
+		);
+	};
+
 	return (
 		<SafeAreaView>
 			<View className=" relative">
-				<ScrollView className=" p-4 pb-20 min-h-screen">
+				<ScrollView className=" p-4 pb-40 min-h-screen">
 					<View className=" p-3 bg-white border-l-4 border-blue-700 rounded-md">
 						<Text>Balance</Text>
 						<Text className=" text-3xl text-blue-700 font-extrabold mt-2">₦ {formatNumberInThousand(balance)}</Text>
 					</View>
 
 					<View className="flex flex-row justify-between  items-center mt-6">
-						<Text className=" font-semibold  text-lg">Transactions</Text>
+						<Text className=" font-semibold  text-lg">Recent Transactions</Text>
 						<Pressable onPress={test}>
 							<Ionicons name="reload" size={20} color="gray" />
 						</Pressable>
 					</View>
 
-					<View className=" flex flex-row items-center space-x-4 mt-2 mb-3">
-						<TabButton activeTab={activeTab} tab={"all"} handleChangeTab={handleChangeTab} text={"All"} />
-						<TabButton activeTab={activeTab} tab={"income"} handleChangeTab={handleChangeTab} text={"Income"} />
+					<View className=" pb-20">
+						{transactions.map((transaction, index) => (
+							<TransactionItem transaction={transaction} key={transaction.id} />
+						))}
 					</View>
-
-					{activeTab === "all" && (
-						<View className=" pb-20">
-							{transactions.map((transaction, index) => (
-								<TransactionItem transaction={transaction} key={transaction.id} />
-							))}
-						</View>
-					)}
-					{activeTab === "income" && (
-						<View>
-							<Text>All Income</Text>
-						</View>
-					)}
 				</ScrollView>
 
 				{/* floting buttons */}
@@ -266,6 +256,7 @@ export default function HomeScreen() {
 				>
 					<TouchableOpacity
 						activeOpacity={0.7}
+						onPress={toggleAddIncomeModal}
 						className=" bg-green-700 h-16 w-16 flex items-center justify-center rounded-full"
 					>
 						<FontAwesome5 name="plus" size={20} color="white" />
@@ -288,6 +279,10 @@ export default function HomeScreen() {
 					categories={categories}
 					addExpense={handleAddExpense}
 				/>
+			)}
+
+			{showAddIncomeModal && (
+				<AddIncomeModal showModal={showAddIncomeModal} closeModal={toggleAddIncomeModal} addIncome={handleAddIncome} />
 			)}
 		</SafeAreaView>
 	);
