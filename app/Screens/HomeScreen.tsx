@@ -8,7 +8,7 @@ import { Feather, Ionicons, FontAwesome5, Entypo, MaterialIcons, MaterialCommuni
 import AddExpenseModal from "../Components/Modals/AddExpenseModal";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import AddIncomeModal from "../Components/Modals/AddIncomeModal";
-import { AddExpenseProps, AddIncomeProps, TransactionItem as TransactionItemType } from "../utils/types";
+import { AddExpenseProps, AddIncomeProps, EachTransactionItem } from "../utils/types";
 
 const db = SQLite.openDatabase("data.db");
 
@@ -26,16 +26,11 @@ db.transaction((tx) => {
 });
 
 export default function HomeScreen() {
-	const [activeTab, setActiveTab] = useState<string>("all");
-	const [transactions, setTransactions] = useState<TransactionItemType[]>([]);
+	const [transactions, setTransactions] = useState<EachTransactionItem[]>([]);
 	const [balance, setBalance] = useState<number>(0);
 	const [showAddExpenseModal, setShowAddExpenseModal] = useState<boolean>(false);
 	const [showAddIncomeModal, setShowAddIncomeModal] = useState<boolean>(false);
 	const [categories, setCategories] = useState<string[]>([]);
-
-	const handleChangeTab = (tab: string) => {
-		setActiveTab(tab);
-	};
 
 	// get categories count from storage
 	useEffect(() => {
@@ -145,16 +140,15 @@ export default function HomeScreen() {
 		// 	db.exec(
 		// 		[
 		// 			{
-		// 				sql: "DROP TABLE IF EXISTS transactions",
+		// 				sql: "DELETE FROM transactions WHERE id=2",
 		// 				args: [],
 		// 			},
 		// 		],
 		// 		false,
-		// 		(error, results) => console.log("table dropeed")
+		// 		(error, results) => console.log(results)
 		// 	);
 		// });
-
-		console.log("done");
+		// setBalance(3800);
 	};
 
 	const toggleAddExpenseModal = () => setShowAddExpenseModal((prev) => !prev);
@@ -228,8 +222,8 @@ export default function HomeScreen() {
 
 	return (
 		<SafeAreaView>
-			<View className=" relative">
-				<ScrollView className=" p-4 pb-40 min-h-screen">
+			<View className="relative">
+				<ScrollView className=" p-4 min-h-screen">
 					<View className=" p-3 bg-white border-l-4 border-blue-700 rounded-md">
 						<Text>Balance</Text>
 						<Text className=" text-3xl text-blue-700 font-extrabold mt-2">₦ {formatNumberInThousand(balance)}</Text>
@@ -242,8 +236,8 @@ export default function HomeScreen() {
 						</Pressable>
 					</View>
 
-					<View className=" pb-20">
-						{transactions.map((transaction, index) => (
+					<View className=" pb-80">
+						{transactions.map((transaction) => (
 							<TransactionItem transaction={transaction} key={transaction.id} />
 						))}
 					</View>

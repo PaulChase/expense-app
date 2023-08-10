@@ -1,4 +1,4 @@
-export interface TransactionItem {
+export interface EachTransactionItem {
 	id: number;
 	amount: number;
 	type: string;
