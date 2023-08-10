@@ -1,7 +1,15 @@
 import { StyleSheet, Text, View } from "react-native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { NavigationContainer, useNavigationContainerRef } from "@react-navigation/native";
-import { Feather, Ionicons, FontAwesome5, Entypo, MaterialIcons, MaterialCommunityIcons } from "@expo/vector-icons";
+import {
+	Feather,
+	Ionicons,
+	FontAwesome5,
+	Entypo,
+	MaterialIcons,
+	MaterialCommunityIcons,
+	AntDesign,
+} from "@expo/vector-icons";
 import HomeScreen from "./app/Screens/HomeScreen";
 import CategoriesScreen from "./app/Screens/CategoriesScreen";
 
@@ -17,7 +25,7 @@ export default function App() {
 							case "Home":
 								return <Ionicons name="home" size={24} color={color} />;
 							case "Bills":
-								return <FontAwesome5 name="money-check-alt" size={24} color={color} />;
+								return <AntDesign name="tags" size={24} color={color} />;
 						}
 					},
 					tabBarActiveTintColor: "blue",

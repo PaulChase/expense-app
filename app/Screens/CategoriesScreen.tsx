@@ -1,10 +1,12 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { useEffect, useState } from "react";
-import { FlatList, SafeAreaView, ScrollView, Text, View, RefreshControl } from "react-native";
+import { FlatList, SafeAreaView, ScrollView, Text, View, RefreshControl, TouchableOpacity } from "react-native";
 import CategoryItem from "../Components/CategoryItem";
 import { EachTransactionItem } from "../utils/types";
 import * as SQLite from "expo-sqlite";
 import { formatNumberInThousand } from "../utils/helpers";
+import { FontAwesome5, MaterialCommunityIcons } from "@expo/vector-icons";
+import AddCategoryModal from "../Components/Modals/AddCategoryModal";
 
 export default function CategoriesScreen() {
 	const db = SQLite.openDatabase("data.db");
@@ -12,6 +14,7 @@ export default function CategoriesScreen() {
 	const [categories, setCategories] = useState<string[]>([]);
 	const [expenses, setExpenses] = useState<EachTransactionItem[]>([]);
 	const [isLoading, setisLoading] = useState(false);
+	const [showAddCategoryModal, setshowAddCategoryModal] = useState(false);
 
 	// get categories count from storage
 	useEffect(() => {
@@ -50,6 +53,19 @@ export default function CategoriesScreen() {
 		};
 	}, []);
 
+	// set the categories  in storage after its value changes
+	useEffect(() => {
+		const updateCategoriesInStorage = async () => {
+			try {
+				await AsyncStorage.setItem("categories", JSON.stringify(categories));
+			} catch (error) {
+				alert(error);
+			}
+		};
+
+		updateCategoriesInStorage();
+	}, [categories]);
+
 	const getExpenses = () => {
 		db.transaction((tx) => {
 			db.exec(
@@ -74,7 +90,7 @@ export default function CategoriesScreen() {
 			.filter((transaction) => transaction.category === category)
 			.reduce((sum, transaction) => sum + transaction.amount, 0);
 
-		return formatNumberInThousand(totalExpense);
+		return totalExpense;
 	};
 
 	const handleOnRefresh = React.useCallback(() => {
@@ -83,23 +99,52 @@ export default function CategoriesScreen() {
 		setisLoading(false);
 	}, []);
 
+	const toggleAddCategoryModal = () => setshowAddCategoryModal((prev) => !prev);
+
+	const handleAddCategory = (category: string) => {
+		setCategories((prev) => [...prev, category]);
+		toggleAddCategoryModal();
+	};
+
 	return (
 		<SafeAreaView>
-			<ScrollView
-				className="p-4 min-h-screen"
-				refreshControl={<RefreshControl refreshing={isLoading} onRefresh={handleOnRefresh} />}
-			>
-				<View className=" flex flex-row items-center justify-between mt-2">
-					<Text className=" font-semibold  text-xl">Bills Categories</Text>
-					<Text className=" font-semibold  text-gray-500 text-lg">Total Spent</Text>
-				</View>
+			<View className=" relative">
+				<ScrollView
+					className="p-4 min-h-screen"
+					refreshControl={<RefreshControl refreshing={isLoading} onRefresh={handleOnRefresh} />}
+				>
+					<View className=" flex flex-row items-center justify-between mt-2">
+						<Text className=" font-semibold  text-xl">Bills Categories</Text>
+						<Text className=" font-semibold  text-gray-500 text-lg">Total Spent</Text>
+					</View>
 
-				<View className=" pb-60 mt-8">
-					{categories.map((category, index) => (
-						<CategoryItem category={category} key={index} getCategoryTotalExpense={getCategoryTotalExpense} />
-					))}
-				</View>
-			</ScrollView>
+					<View className=" pb-60 mt-4">
+						{categories
+							.map((category) => ({ name: category, totalExpense: getCategoryTotalExpense(category) }))
+							.sort((a, b) => b.totalExpense - a.totalExpense) //sort expense in descending order
+							.map((category, index) => (
+								<CategoryItem category={category} key={index} />
+							))}
+					</View>
+				</ScrollView>
+
+				<TouchableOpacity
+					activeOpacity={0.7}
+					onPress={toggleAddCategoryModal}
+					style={{ elevation: 10 }}
+					className=" absolute right-10 bottom-5  z-50  bg-blue-600 h-16 w-16 flex items-center justify-center rounded-full mb-32"
+				>
+					<MaterialCommunityIcons name="tag-plus" size={24} color="white" />
+				</TouchableOpacity>
+			</View>
+
+			{showAddCategoryModal && (
+				<AddCategoryModal
+					showModal={showAddCategoryModal}
+					closeModal={toggleAddCategoryModal}
+					addCategory={handleAddCategory}
+				/>
+			)}
 		</SafeAreaView>
 	);
 }

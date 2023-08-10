@@ -1,13 +1,16 @@
 import React from "react";
 import { Text, View } from "react-native";
 import { Octicons } from "@expo/vector-icons";
+import { formatNumberInThousand } from "../utils/helpers";
 
 interface CategoryItemProps {
-	category: string;
-	getCategoryTotalExpense: (category: string) => string | undefined;
+	category: {
+		name: string;
+		totalExpense: number;
+	};
 }
 
-export default function CategoryItem({ category, getCategoryTotalExpense }: CategoryItemProps) {
+export default function CategoryItem({ category }: CategoryItemProps) {
 	const borderColors600 = [
 		"border-red-600",
 		"border-orange-600",
@@ -33,8 +36,8 @@ export default function CategoryItem({ category, getCategoryTotalExpense }: Cate
 				borderColors600[Math.floor(Math.random() * borderColors600.length)]
 			}`}
 		>
-			<Text className=" font-medium text-lg">{category}</Text>
-			<Text className=" font-semibold text-lg text-red-500 ">{getCategoryTotalExpense(category)}</Text>
+			<Text className=" font-medium text-lg">{category.name}</Text>
+			<Text className=" font-semibold text-lg text-red-500 ">{formatNumberInThousand(category.totalExpense)}</Text>
 		</View>
 	);
 }
