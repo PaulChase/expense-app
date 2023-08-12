@@ -11,9 +11,10 @@ interface Transaction {
 
 interface TransactionItemProps {
 	transaction: Transaction;
+	showDate?: boolean;
 }
 
-export default function TransactionItem({ transaction }: TransactionItemProps) {
+export default function TransactionItem({ transaction, showDate = true }: TransactionItemProps) {
 	return (
 		<View
 			className={`p-3 bg-white border-l-4  rounded-md mt-4 ${
@@ -31,7 +32,8 @@ export default function TransactionItem({ transaction }: TransactionItemProps) {
 
 				{transaction.category && <Text className=" font-semibold text-gray-500 text-sm">{transaction.category}</Text>}
 			</View>
-			<Text>{new Date(transaction.date).toDateString()}</Text>
+
+			{showDate && <Text>{new Date(transaction.date).toDateString()}</Text>}
 		</View>
 	);
 }

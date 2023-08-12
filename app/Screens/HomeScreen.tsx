@@ -10,6 +10,11 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import AddIncomeModal from "../Components/Modals/AddIncomeModal";
 import { AddExpenseProps, AddIncomeProps, EachTransactionItem } from "../utils/types";
 
+interface CurrentMonthState {
+	income: number;
+	expense: number;
+}
+
 const db = SQLite.openDatabase("data.db");
 
 db.transaction((tx) => {
@@ -31,6 +36,7 @@ export default function HomeScreen() {
 	const [showAddExpenseModal, setShowAddExpenseModal] = useState<boolean>(false);
 	const [showAddIncomeModal, setShowAddIncomeModal] = useState<boolean>(false);
 	const [categories, setCategories] = useState<string[]>([]);
+	const [currentMonth, setCurrentMonth] = useState<CurrentMonthState>({ income: 0, expense: 0 });
 
 	// get categories count from storage
 	useEffect(() => {
@@ -120,12 +126,13 @@ export default function HomeScreen() {
 		updateBalanceInStorage();
 	}, [balance]);
 
+	// get recent transactions
 	useEffect(() => {
 		db.transaction((tx) => {
 			db.exec(
 				[
 					{
-						sql: "SELECT * FROM transactions ORDER BY id DESC",
+						sql: "SELECT * FROM transactions ORDER BY id DESC LIMIT 5",
 						args: [],
 					},
 				],
@@ -135,12 +142,42 @@ export default function HomeScreen() {
 		});
 	}, []);
 
+	useEffect(() => {
+		// get this month expense
+		db.transaction((tx) => {
+			db.exec(
+				[
+					{
+						sql: "SELECT SUM(amount) AS total_expenses FROM transactions WHERE  type = 'expense' AND strftime('%Y-%m', date) = strftime('%Y-%m', 'now')",
+						args: [],
+					},
+				],
+				false,
+				(error, results) => setCurrentMonth((prev) => ({ ...prev, expense: results[0].rows[0].total_expenses }))
+			);
+		});
+
+		// get this month income
+		db.transaction((tx) => {
+			db.exec(
+				[
+					{
+						sql: "SELECT SUM(amount) AS total_income FROM transactions WHERE  type = 'income' AND strftime('%Y-%m', date) = strftime('%Y-%m', 'now')",
+						args: [],
+					},
+				],
+				false,
+				(error, results) => setCurrentMonth((prev) => ({ ...prev, income: results[0].rows[0].total_income }))
+			);
+		});
+	}, []);
+
 	const test = async () => {
 		// db.transaction((tx) => {
 		// 	db.exec(
 		// 		[
 		// 			{
-		// 				sql: "DELETE FROM transactions WHERE id=2",
+		// 				sql: "SELECT SUM(amount) AS total_expenses FROM transactions WHERE  type = 'expense' AND strftime('%Y-%m', date) = strftime('%Y-%m', 'now')",
 		// 				args: [],
 		// 			},
 		// 		],
@@ -148,7 +185,7 @@ export default function HomeScreen() {
 		// 		(error, results) => console.log(results)
 		// 	);
 		// });
-		// setBalance(3800);
+		console.log(transactions);
 	};
 
 	const toggleAddExpenseModal = () => setShowAddExpenseModal((prev) => !prev);
@@ -225,8 +262,27 @@ export default function HomeScreen() {
 			<View className="relative">
 				<ScrollView className=" p-4 min-h-screen">
 					<View className=" p-3 bg-white border-l-4 border-blue-700 rounded-md">
-						<Text>Balance</Text>
+						<Text className=" text-lg font-semibold">Balance</Text>
 						<Text className=" text-3xl text-blue-700 font-extrabold mt-2">₦ {formatNumberInThousand(balance)}</Text>
+					</View>
+
+					<View className="flex flex-row justify-between  items-center mt-6">
+						<Text className=" font-semibold  text-lg">This Month</Text>
+					</View>
+
+					<View className=" flex flex-row items-center mt-2">
+						<View className=" p-3 bg-white border-l-4 border-blue-700 rounded-md flex-1 mr-2">
+							<Text className=" text-lg font-semibold text-gray-500">Income</Text>
+							<Text className=" text-3xl text-green-600 font-extrabold mt-2">
+								₦ {formatNumberInThousand(currentMonth?.income)}
+							</Text>
+						</View>
+						<View className=" p-3 bg-white border-l-4 border-blue-700 rounded-md flex-1 ml-2">
+							<Text className=" text-lg font-semibold text-gray-500">Expense</Text>
+							<Text className=" text-3xl text-red-700 font-extrabold mt-2">
+								₦ {formatNumberInThousand(currentMonth?.expense)}
+							</Text>
+						</View>
 					</View>
 
 					<View className="flex flex-row justify-between  items-center mt-6">

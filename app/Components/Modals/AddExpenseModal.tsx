@@ -40,7 +40,9 @@ export default function AddExpenseModal({ showModal, closeModal, categories, add
 
 					<RNPickerSelect
 						onValueChange={(value) => setCategory(value)}
-						items={categories.map((category) => ({ label: category, value: category }))}
+						items={categories
+							.sort((a, b) => a.localeCompare(b))
+							.map((category) => ({ label: category, value: category }))}
 						useNativeAndroidPickerStyle={false}
 						style={pickerSelectStyles}
 						placeholder={{ label: "Select Category", value: null }}

@@ -1,10 +1,9 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { useEffect, useState } from "react";
-import { FlatList, SafeAreaView, ScrollView, Text, View, RefreshControl, TouchableOpacity } from "react-native";
+import { SafeAreaView, ScrollView, Text, View, RefreshControl, TouchableOpacity } from "react-native";
 import CategoryItem from "../Components/CategoryItem";
 import { EachTransactionItem } from "../utils/types";
 import * as SQLite from "expo-sqlite";
-import { formatNumberInThousand } from "../utils/helpers";
 import { FontAwesome5, MaterialCommunityIcons } from "@expo/vector-icons";
 import AddCategoryModal from "../Components/Modals/AddCategoryModal";
 

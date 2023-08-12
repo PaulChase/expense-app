@@ -12,6 +12,7 @@ import {
 } from "@expo/vector-icons";
 import HomeScreen from "./app/Screens/HomeScreen";
 import CategoriesScreen from "./app/Screens/CategoriesScreen";
+import CalendarScreen from "./app/Screens/CalendarScreen";
 
 const Tab = createBottomTabNavigator();
 
@@ -26,6 +27,8 @@ export default function App() {
 								return <Ionicons name="home" size={24} color={color} />;
 							case "Bills":
 								return <AntDesign name="tags" size={24} color={color} />;
+							case "Calendar":
+								return <Entypo name="calendar" size={24} color={color} />;
 						}
 					},
 					tabBarActiveTintColor: "blue",
@@ -43,12 +46,13 @@ export default function App() {
 					},
 					headerShown: true,
 
-					// headerTintColor: headerTextColor,
+					headerTintColor: "blue",
 					// headerRight: () => <DarkModeSwitch />,
 				})}
 			>
 				<Tab.Screen name="Home" component={HomeScreen} />
 				<Tab.Screen name="Bills" component={CategoriesScreen} />
+				<Tab.Screen name="Calendar" component={CalendarScreen} />
 			</Tab.Navigator>
 		</NavigationContainer>
 	);
