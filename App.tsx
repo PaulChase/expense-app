@@ -14,10 +14,42 @@ import HomeScreen from "./app/Screens/HomeScreen";
 import CategoriesScreen from "./app/Screens/CategoriesScreen";
 import CalendarScreen from "./app/Screens/CalendarScreen";
 import Toast from "react-native-toast-message";
+import { useEffect, useState } from "react";
+import OnboardingScreen from "./app/Screens/OnboardingScreen";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const Tab = createBottomTabNavigator();
 
 export default function App() {
+	const [showOnboarding, setShowOnboarding] = useState<boolean | null>(null);
+
+	useEffect(() => {
+		async function checkOnboarding() {
+			try {
+				const onboardingShown = await AsyncStorage.getItem("onboardingShown");
+				if (!onboardingShown) {
+					setShowOnboarding(true);
+				} else {
+					setShowOnboarding(false);
+				}
+			} catch (error) {
+				alert("Error checking onboarding:");
+			}
+		}
+
+		checkOnboarding();
+	}, []);
+
+	const toggleOnboardingScreen = () => setShowOnboarding(false);
+
+	if (showOnboarding == null) {
+		return null;
+	}
+
+	if (showOnboarding) {
+		return <OnboardingScreen toggleOnboardingScreen={toggleOnboardingScreen} />;
+	}
+
 	return (
 		<>
 			<NavigationContainer>
@@ -39,9 +71,7 @@ export default function App() {
 							paddingBottom: 5,
 						},
 						tabBarStyle: {
-							// paddingVertical: 8,
 							height: 50,
-							// backgroundColor: colorScheme === "dark" ? "black" : "#bfbfbf",
 							borderTopWidth: 1,
 							borderTopColor: "gray",
 							borderTopLeftRadius: 20,
@@ -51,7 +81,6 @@ export default function App() {
 						tabBarShowLabel: false,
 
 						headerTintColor: "blue",
-						// headerRight: () => <DarkModeSwitch />,
 					})}
 				>
 					<Tab.Screen name="Home" component={HomeScreen} />

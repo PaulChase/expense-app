@@ -12,7 +12,7 @@ interface AddIncomeModalProps {
 export default function AddIncomeModal({ showModal, closeModal, addIncome }: AddIncomeModalProps) {
 	const [amount, setAmount] = useState("");
 
-	const handleAddExpense = () => {
+	const handleAddIncome = () => {
 		addIncome({ amount });
 	};
 
@@ -35,7 +35,7 @@ export default function AddIncomeModal({ showModal, closeModal, addIncome }: Add
 						keyboardType="phone-pad"
 					/>
 
-					<TouchableOpacity activeOpacity={0.6} onPress={handleAddExpense}>
+					<TouchableOpacity activeOpacity={0.6} onPress={handleAddIncome}>
 						<View className=" bg-blue-600 px-4 py-3 rounded-lg flex-row justify-center space-x-3 mt-6">
 							<Text className="text-center text-sm text-white font-semibold">Add Income</Text>
 						</View>
