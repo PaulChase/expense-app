@@ -75,11 +75,13 @@ export default function CalendarScreen() {
 	return (
 		<SafeAreaView>
 			<ScrollView className=" p-4 min-h-screen">
+				<Text className=" font-semibold  text-xl mb-4 p-3 bg-white rounded-md">Daily recorded transactions</Text>
+
 				<Calendar
 					onDayPress={handleSelectedDay}
 					markedDates={markedDates}
 					markingType={"dot"}
-					onMonthChange={(date) => console.log(date)}
+					// onMonthChange={(date) => console.log(date)}
 				/>
 
 				{selectedDate && (

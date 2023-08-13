@@ -39,12 +39,13 @@ export default function App() {
 					},
 					tabBarStyle: {
 						paddingVertical: 10,
-						height: 60,
+						height: 50,
 						// backgroundColor: colorScheme === "dark" ? "black" : "#bfbfbf",
 						borderTopWidth: 1,
 						borderTopColor: "gray",
 					},
 					headerShown: true,
+					tabBarShowLabel: false,
 
 					headerTintColor: "blue",
 					// headerRight: () => <DarkModeSwitch />,
