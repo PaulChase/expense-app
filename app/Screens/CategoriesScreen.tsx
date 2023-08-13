@@ -6,6 +6,7 @@ import { EachTransactionItem } from "../utils/types";
 import * as SQLite from "expo-sqlite";
 import { FontAwesome5, MaterialCommunityIcons } from "@expo/vector-icons";
 import AddCategoryModal from "../Components/Modals/AddCategoryModal";
+import Toast from "react-native-toast-message";
 
 export default function CategoriesScreen() {
 	const db = SQLite.openDatabase("data.db");
@@ -103,6 +104,10 @@ export default function CategoriesScreen() {
 	const handleAddCategory = (category: string) => {
 		setCategories((prev) => [...prev, category]);
 		toggleAddCategoryModal();
+		Toast.show({
+			type: "success",
+			text1: "Category added 👍",
+		});
 	};
 
 	return (

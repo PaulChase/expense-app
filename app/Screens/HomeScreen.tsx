@@ -10,6 +10,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import AddIncomeModal from "../Components/Modals/AddIncomeModal";
 import { AddExpenseProps, AddIncomeProps, EachTransactionItem } from "../utils/types";
 import moment from "moment";
+import Toast from "react-native-toast-message";
 
 const DEFAULT_CATEGORIES = [
 	"Food",
@@ -177,7 +178,7 @@ export default function HomeScreen() {
 	useEffect(() => {
 		getThisMonthExpenses();
 		getThisMonthIncome();
-	}, []);
+	}, [balance]);
 
 	const calculateRunway = () => {
 		// Get the current date
@@ -213,7 +214,12 @@ export default function HomeScreen() {
 		// 		(error, results) => console.log(results)
 		// 	);
 		// });
-		// console.log(transactions);
+		console.log("clicked");
+		Toast.show({
+			type: "success",
+			text1: "Hello",
+			text2: "This is some something 👋",
+		});
 	};
 
 	const toggleAddExpenseModal = () => setShowAddExpenseModal((prev) => !prev);
@@ -249,6 +255,11 @@ export default function HomeScreen() {
 			() => {
 				setBalance((prev) => parseInt(prev) - parseInt(expense.amount));
 				toggleAddExpenseModal();
+				Toast.show({
+					type: "success",
+					text1: "Great Job 👍",
+					text2: "Expense recorded successfully",
+				});
 			}
 		);
 	};
@@ -281,6 +292,11 @@ export default function HomeScreen() {
 			() => {
 				setBalance((prev) => parseInt(prev) + parseInt(income.amount));
 				toggleAddIncomeModal();
+				Toast.show({
+					type: "success",
+					text1: "Great Job 👍",
+					text2: "Income recorded successfully",
+				});
 			}
 		);
 	};
@@ -334,7 +350,7 @@ export default function HomeScreen() {
 
 					<View className="flex flex-row justify-between  items-center mt-6">
 						<Text className=" font-semibold  text-lg">Recent Transactions</Text>
-						<Pressable onPress={calculateRunway}>
+						<Pressable onPress={test}>
 							<Ionicons name="reload" size={20} color="gray" />
 						</Pressable>
 					</View>
