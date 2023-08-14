@@ -1,37 +1,32 @@
 {
-  "expo": {
-    "name": "expense-app",
-    "slug": "expense-app",
-    "version": "1.0.0",
-    "orientation": "portrait",
-    "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
-    "splash": {
-      "image": "./assets/splash.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
-    },
-    "assetBundlePatterns": [
-      "**/*"
-    ],
-    "ios": {
-      "supportsTablet": true
-    },
-    "android": {
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
-      },
-      "permissions": [
-        "READ_SMS",
-        "SEND_SMS"
-      ],
-      "package": "com.paulstack.expenseapp"
-    },
-    "extra": {
-      "eas": {
-        "projectId": "638cb3db-a1a6-42bf-b737-63ae351689b0"
-      }
-    }
-  }
+	"expo": {
+		"name": "Expense Tracker",
+		"slug": "expense-app",
+		"version": "1.0.0",
+		"orientation": "portrait",
+		"icon": "./assets/icon.png",
+		"userInterfaceStyle": "light",
+		"splash": {
+			"image": "./assets/splash.png",
+			"resizeMode": "contain",
+			"backgroundColor": "#ffffff"
+		},
+		"assetBundlePatterns": ["**/*"],
+		"ios": {
+			"supportsTablet": true
+		},
+		"android": {
+			"adaptiveIcon": {
+				"foregroundImage": "./assets/adaptive-icon.png",
+				"backgroundColor": "#ffffff"
+			},
+			"permissions": [],
+			"package": "com.paulstack.expenseapp"
+		},
+		"extra": {
+			"eas": {
+				"projectId": "638cb3db-a1a6-42bf-b737-63ae351689b0"
+			}
+		}
+	}
 }

@@ -343,16 +343,17 @@ export default function HomeScreen() {
 					<View className=" p-3 bg-white border-l-4 border-blue-700 rounded-md mt-6">
 						<Text className=" text-lg font-semibold">Runway</Text>
 						<Text className=" text-gray-500 mt-1 mb-2">
-							This is the daily spending limit to ensure you have enough to cover your needs until the end of the month.
+							This is your daily spending limit to ensure you have enough to cover your needs until the end of the
+							month.
 						</Text>
 						<Text className=" text-3xl text-blue-700 font-extrabold mt-2">₦ {formatNumberInThousand(runway)}</Text>
 					</View>
 
 					<View className="flex flex-row justify-between  items-center mt-6">
 						<Text className=" font-semibold  text-lg">Recent Transactions</Text>
-						<Pressable onPress={test}>
+						{/* <Pressable onPress={test}>
 							<Ionicons name="reload" size={20} color="gray" />
-						</Pressable>
+						</Pressable> */}
 					</View>
 
 					<View className=" pb-80">
