@@ -48,9 +48,14 @@ const OnboardingScreen = ({ toggleOnboardingScreen }: OnboardingScreenProps) => 
 					keyboardType="phone-pad"
 				/>
 
-				<TouchableOpacity activeOpacity={0.6} onPress={handleAddBalance} disabled={balance.length === 0}>
+				<TouchableOpacity
+					activeOpacity={0.6}
+					onPress={handleAddBalance}
+					disabled={balance.length === 0}
+					className="  mt-6"
+				>
 					<View
-						className={`  px-4 py-3 rounded-lg flex-row justify-center space-x-3 mt-6 ${
+						className={`  px-4 py-3 rounded-lg flex-row justify-center space-x-3  ${
 							balance.length > 0 ? "bg-blue-600" : "bg-blue-200"
 						}  `}
 					>

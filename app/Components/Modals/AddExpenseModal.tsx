@@ -1,8 +1,8 @@
 import React, { useContext, useState } from "react";
-import { Modal, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Button, Modal, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import RNPickerSelect from "react-native-picker-select";
 import { AddExpenseProps } from "../../utils/types";
+import ModalSelector from "react-native-modal-selector";
 
 interface AddExpenseModalProps {
 	showModal: boolean;
@@ -38,18 +38,39 @@ export default function AddExpenseModal({ showModal, closeModal, categories, add
 						keyboardType="phone-pad"
 					/>
 
-					<RNPickerSelect
-						onValueChange={(value) => setCategory(value)}
-						items={categories
-							.sort((a, b) => a.localeCompare(b))
-							.map((category) => ({ label: category, value: category }))}
-						useNativeAndroidPickerStyle={false}
-						style={pickerSelectStyles}
-						placeholder={{ label: "Select Category", value: null }}
-					/>
+					<ModalSelector
+						data={categories.sort((a, b) => a.localeCompare(b)).map((category) => ({ id: category, label: category }))}
+						keyExtractor={(item) => item.id}
+						style={{ marginTop: 18 }}
+						onChange={(option) => {
+							setCategory(option.label);
+						}}
+						header={
+							<View style={{ padding: 16, alignItems: "center" }}>
+								<Text style={{ fontSize: 16, color: "black" }}>What did you spend the money on?</Text>
+							</View>
+						}
+						overlayStyle={{ flex: 1, padding: "5%", justifyContent: "flex-end", backgroundColor: "rgba(0,0,0,0.7)" }}
+					>
+						<TextInput
+							style={{ borderWidth: 1, borderColor: "#ccc", padding: 10, borderRadius: 6, color: "gray" }}
+							editable={false}
+							placeholder="Select category..."
+							value={category}
+						/>
+					</ModalSelector>
 
-					<TouchableOpacity activeOpacity={0.6} onPress={handleAddExpense}>
-						<View className=" bg-blue-600 px-4 py-3 rounded-lg flex-row justify-center space-x-3 mt-6">
+					<TouchableOpacity
+						activeOpacity={0.6}
+						onPress={handleAddExpense}
+						disabled={amount.length === 0 || category.length === 0}
+						className="  mt-6"
+					>
+						<View
+							className={`  px-4 py-3 rounded-lg flex-row justify-center space-x-3  ${
+								amount.length > 0 && category.length > 0 ? "bg-blue-600" : "bg-blue-200"
+							}  `}
+						>
 							<Text className="text-center text-sm text-white font-semibold">Add Expense</Text>
 						</View>
 					</TouchableOpacity>

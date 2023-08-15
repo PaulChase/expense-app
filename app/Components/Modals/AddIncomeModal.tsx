@@ -35,8 +35,17 @@ export default function AddIncomeModal({ showModal, closeModal, addIncome }: Add
 						keyboardType="phone-pad"
 					/>
 
-					<TouchableOpacity activeOpacity={0.6} onPress={handleAddIncome}>
-						<View className=" bg-blue-600 px-4 py-3 rounded-lg flex-row justify-center space-x-3 mt-6">
+					<TouchableOpacity
+						activeOpacity={0.6}
+						onPress={handleAddIncome}
+						disabled={amount.length === 0}
+						className="  mt-6"
+					>
+						<View
+							className={`  px-4 py-3 rounded-lg flex-row justify-center space-x-3  ${
+								amount.length > 0 ? "bg-blue-600" : "bg-blue-200"
+							}  `}
+						>
 							<Text className="text-center text-sm text-white font-semibold">Add Income</Text>
 						</View>
 					</TouchableOpacity>

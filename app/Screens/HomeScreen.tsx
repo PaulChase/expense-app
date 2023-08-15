@@ -227,6 +227,12 @@ export default function HomeScreen() {
 	const toggleAddIncomeModal = () => setShowAddIncomeModal((prev) => !prev);
 
 	const handleAddExpense = (expense: AddExpenseProps) => {
+		const newBalance = balance - parseInt(expense.amount);
+
+		if (newBalance < 0) {
+			return alert("How did you spend more than what than your current balance? \n 🙄🙄");
+		}
+
 		db.transaction(
 			(tx) => {
 				db.exec(
@@ -253,7 +259,7 @@ export default function HomeScreen() {
 			},
 			(error) => alert(error),
 			() => {
-				setBalance((prev) => parseInt(prev) - parseInt(expense.amount));
+				setBalance(newBalance);
 				toggleAddExpenseModal();
 				Toast.show({
 					type: "success",
