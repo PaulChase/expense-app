@@ -67,7 +67,6 @@ const OnboardingScreen = ({ toggleOnboardingScreen }: OnboardingScreenProps) => 
 	};
 	return (
 		<Onboarding
-			onDone={() => console.log("done")}
 			showSkip={false}
 			showDone={false}
 			NextButtonComponent={NextBtn}

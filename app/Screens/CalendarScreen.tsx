@@ -98,12 +98,7 @@ export default function CalendarScreen() {
 			>
 				<Text className=" font-semibold  text-xl mb-4 p-3 bg-white rounded-md">Daily recorded transactions</Text>
 
-				<Calendar
-					onDayPress={handleSelectedDay}
-					markedDates={markedDates}
-					markingType={"dot"}
-					// onMonthChange={(date) => console.log(date)}
-				/>
+				<Calendar onDayPress={handleSelectedDay} markedDates={markedDates} markingType={"dot"} />
 
 				{selectedDate && (
 					<View className=" mt-6">

@@ -214,12 +214,6 @@ export default function HomeScreen() {
 		// 		(error, results) => console.log(results)
 		// 	);
 		// });
-		console.log("clicked");
-		Toast.show({
-			type: "success",
-			text1: "Hello",
-			text2: "This is some something 👋",
-		});
 	};
 
 	const toggleAddExpenseModal = () => setShowAddExpenseModal((prev) => !prev);
