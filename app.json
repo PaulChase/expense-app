@@ -1,33 +1,38 @@
 {
-	"expo": {
-		"name": "Spend Buddy",
-		"slug": "SpendBuddy",
-		"version": "1.1.0",
-		"orientation": "portrait",
-		"icon": "./assets/icon.png",
-		"userInterfaceStyle": "light",
-		"splash": {
-			"image": "./assets/splash.png",
-			"resizeMode": "contain",
-			"backgroundColor": "#ffffff"
-		},
-		"assetBundlePatterns": ["**/*"],
-		"ios": {
-			"supportsTablet": true
-		},
-		"android": {
-			"adaptiveIcon": {
-				"foregroundImage": "./assets/adaptive-icon.png",
-				"backgroundColor": "#ffffff"
-			},
-			"permissions": [],
-			"package": "com.paulstack.spendbuddy",
-			"versionCode": 1
-		},
-		"extra": {
-			"eas": {
-				"projectId": "638cb3db-a1a6-42bf-b737-63ae351689b0"
-			}
-		}
-	}
+  "expo": {
+    "name": "Spend Buddy",
+    "slug": "SpendBuddy",
+    "version": "1.1.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "permissions": [],
+      "package": "com.paulstack.spendbuddy",
+      "versionCode": 1
+    },
+    "extra": {
+      "eas": {
+        "projectId": "638cb3db-a1a6-42bf-b737-63ae351689b0"
+      }
+    },
+    "plugins": [
+      "expo-sqlite"
+    ]
+  }
 }
