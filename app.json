@@ -2,7 +2,7 @@
   "expo": {
     "name": "Spend Buddy",
     "slug": "SpendBuddy",
-    "version": "1.1.0",
+    "version": "1.2.1",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -24,15 +24,22 @@
       },
       "permissions": [],
       "package": "com.paulstack.spendbuddy",
-      "versionCode": 1
+      "versionCode": 2
     },
     "extra": {
       "eas": {
-        "projectId": "638cb3db-a1a6-42bf-b737-63ae351689b0"
+        "projectId": "4bad8eaf-4025-46b4-b97d-79569943ed98"
       }
     },
     "plugins": [
       "expo-sqlite"
-    ]
+    ],
+    "owner": "paulstack",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/4bad8eaf-4025-46b4-b97d-79569943ed98"
+    }
   }
 }
