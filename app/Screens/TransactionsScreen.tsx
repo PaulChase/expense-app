@@ -5,6 +5,7 @@ import * as FileSystem from "expo-file-system";
 import * as Sharing from "expo-sharing";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
 import TransactionItem from "../Components/TransactionItem";
+import DeleteConfirmationModal from "../Components/Modals/DeleteConfirmationModal";
 import { EachTransactionItem } from "../utils/types";
 import moment from "moment";
 import Toast from "react-native-toast-message";
@@ -44,6 +45,8 @@ export default function TransactionsScreen() {
 	const [showMonthSelector, setShowMonthSelector] = useState(false);
 	const [showYearSelector, setShowYearSelector] = useState(false);
 	const [isExporting, setIsExporting] = useState(false);
+	const [showDeleteModal, setShowDeleteModal] = useState(false);
+	const [transactionToDelete, setTransactionToDelete] = useState<EachTransactionItem | null>(null);
 
 	// Get all available years with transactions
 	const getAvailableYears = async () => {
@@ -214,6 +217,55 @@ export default function TransactionsScreen() {
 		} finally {
 			setIsExporting(false);
 		}
+	};
+
+	// Handle delete transaction
+	const handleDeleteTransaction = (transaction: EachTransactionItem) => {
+		setTransactionToDelete(transaction);
+		setShowDeleteModal(true);
+	};
+
+	// Confirm delete transaction
+	const confirmDeleteTransaction = async () => {
+		if (!transactionToDelete) return;
+
+		try {
+			const database = await initDatabase();
+
+			// Delete the transaction from database
+			await database.runAsync("DELETE FROM transactions WHERE id = ?", [transactionToDelete.id]);
+
+			// Close modal and reset state
+			setShowDeleteModal(false);
+			setTransactionToDelete(null);
+
+			// Refresh the current month's data
+			if (selectedMonth) {
+				await getTransactionsForMonth(selectedMonth.month, selectedMonth.year);
+			}
+
+			// Refresh available years/months in case this was the last transaction
+			await getAvailableYears();
+
+			Toast.show({
+				type: "success",
+				text1: "Transaction deleted",
+				text2: "Transaction has been removed successfully",
+			});
+		} catch (error) {
+			console.error("Error deleting transaction:", error);
+			Toast.show({
+				type: "error",
+				text1: "Delete failed",
+				text2: "An error occurred while deleting the transaction",
+			});
+		}
+	};
+
+	// Close delete modal
+	const closeDeleteModal = () => {
+		setShowDeleteModal(false);
+		setTransactionToDelete(null);
 	};
 
 	// Refresh data
@@ -403,7 +455,7 @@ export default function TransactionsScreen() {
 						</Text>
 						{currentData.transactions.map((transaction) => (
 							<View key={transaction.id} className="mb-2">
-								<TransactionItem transaction={transaction} showDate={true} />
+								<TransactionItem transaction={transaction} showDate={true} onDelete={handleDeleteTransaction} />
 							</View>
 						))}
 					</View>
@@ -427,6 +479,18 @@ export default function TransactionsScreen() {
 					</View>
 				)}
 			</ScrollView>
+
+			{/* Delete Confirmation Modal */}
+			{transactionToDelete && (
+				<DeleteConfirmationModal
+					showModal={showDeleteModal}
+					closeModal={closeDeleteModal}
+					onConfirmDelete={confirmDeleteTransaction}
+					transactionType={transactionToDelete.type}
+					transactionAmount={transactionToDelete.amount}
+					transactionCategory={transactionToDelete.category}
+				/>
+			)}
 		</SafeAreaView>
 	);
 }

@@ -1,9 +1,10 @@
 import React from "react";
-import { Text, View } from "react-native";
+import { Text, View, TouchableOpacity } from "react-native";
 import { formatNumberInThousand } from "../utils/helpers";
-import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { MaterialCommunityIcons, Ionicons } from "@expo/vector-icons";
 
 interface Transaction {
+	id: number;
 	type: string;
 	amount: number;
 	date: string;
@@ -14,9 +15,10 @@ interface Transaction {
 interface TransactionItemProps {
 	transaction: Transaction;
 	showDate?: boolean;
+	onDelete?: (transaction: Transaction) => void;
 }
 
-export default function TransactionItem({ transaction, showDate = true }: TransactionItemProps) {
+export default function TransactionItem({ transaction, showDate = true, onDelete }: TransactionItemProps) {
 	const isIncome = transaction.type === "income";
 
 	// Get category icon
@@ -66,9 +68,16 @@ export default function TransactionItem({ transaction, showDate = true }: Transa
 									</Text>
 								)}
 							</View>
-							<Text className={`font-bold text-lg ${isIncome ? "text-green-600" : "text-red-600"}`}>
-								{isIncome ? "+" : "-"}₦ {formatNumberInThousand(transaction.amount)}
-							</Text>
+							<View className="flex-row items-center">
+								<Text className={`font-bold text-lg ${isIncome ? "text-green-600" : "text-red-600"}`}>
+									{isIncome ? "+" : "-"}₦ {formatNumberInThousand(transaction.amount)}
+								</Text>
+								{onDelete && (
+									<TouchableOpacity onPress={() => onDelete(transaction)} className="ml-3 p-2 bg-red-50 rounded-full">
+										<Ionicons name="trash-outline" size={16} color="#DC2626" />
+									</TouchableOpacity>
+								)}
+							</View>
 						</View>
 
 						{showDate && (

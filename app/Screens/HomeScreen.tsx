@@ -8,6 +8,7 @@ import { Feather, Ionicons, FontAwesome5, Entypo, MaterialIcons, MaterialCommuni
 import AddExpenseModal from "../Components/Modals/AddExpenseModal";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import AddIncomeModal from "../Components/Modals/AddIncomeModal";
+import DeleteConfirmationModal from "../Components/Modals/DeleteConfirmationModal";
 import { AddExpenseProps, AddIncomeProps, EachTransactionItem } from "../utils/types";
 import moment from "moment";
 import Toast from "react-native-toast-message";
@@ -68,6 +69,8 @@ export default function HomeScreen() {
 	const [currentMonth, setCurrentMonth] = useState<CurrentMonthState>({ income: 0, expense: 0 });
 	const [isRefreshing, setIsRefreshing] = useState(false);
 	const [runway, setRunway] = useState(0);
+	const [showDeleteModal, setShowDeleteModal] = useState(false);
+	const [transactionToDelete, setTransactionToDelete] = useState<EachTransactionItem | null>(null);
 
 	const getCategoriesFromStorage = async () => {
 		try {
@@ -325,6 +328,63 @@ export default function HomeScreen() {
 		}
 	};
 
+	// Handle delete transaction
+	const handleDeleteTransaction = (transaction: EachTransactionItem) => {
+		setTransactionToDelete(transaction);
+		setShowDeleteModal(true);
+	};
+
+	// Confirm delete transaction
+	const confirmDeleteTransaction = async () => {
+		if (!transactionToDelete) return;
+
+		try {
+			const database = await initDatabase();
+
+			// Delete the transaction from database
+			await database.runAsync("DELETE FROM transactions WHERE id = ?", [transactionToDelete.id]);
+
+			// Update local state by removing the transaction
+			setTransactions((prev) => prev.filter((t) => t.id !== transactionToDelete.id));
+
+			// Update balance based on transaction type
+			if (transactionToDelete.type === "expense") {
+				// Add back the expense amount to balance
+				setBalance((prev) => prev + transactionToDelete.amount);
+			} else {
+				// Subtract the income amount from balance
+				setBalance((prev) => prev - transactionToDelete.amount);
+			}
+
+			// Close modal and reset state
+			setShowDeleteModal(false);
+			setTransactionToDelete(null);
+
+			// Refresh monthly data
+			await getThisMonthExpenses();
+			await getThisMonthIncome();
+
+			Toast.show({
+				type: "success",
+				text1: "Transaction deleted",
+				text2: "Transaction has been removed successfully",
+			});
+		} catch (error) {
+			console.error("Error deleting transaction:", error);
+			Toast.show({
+				type: "error",
+				text1: "Delete failed",
+				text2: "An error occurred while deleting the transaction",
+			});
+		}
+	};
+
+	// Close delete modal
+	const closeDeleteModal = () => {
+		setShowDeleteModal(false);
+		setTransactionToDelete(null);
+	};
+
 	const handleOnRefresh = async () => {
 		setIsRefreshing(true);
 		await getCategoriesFromStorage();
@@ -399,7 +459,14 @@ export default function HomeScreen() {
 
 					<View className="pb-80">
 						{transactions.length > 0 ? (
-							transactions.map((transaction) => <TransactionItem transaction={transaction} key={transaction.id} />)
+							transactions.map((transaction) => (
+								<TransactionItem
+									transaction={transaction}
+									key={transaction.id}
+									onDelete={handleDeleteTransaction}
+									showDate={false}
+								/>
+							))
 						) : (
 							<View className="bg-white p-6 rounded-2xl items-center shadow-sm border border-gray-100">
 								<MaterialCommunityIcons name="history" size={48} color="#9CA3AF" />
@@ -451,6 +518,18 @@ export default function HomeScreen() {
 					closeModal={toggleAddIncomeModal}
 					addIncome={handleAddIncome}
 					categories={categories}
+				/>
+			)}
+
+			{/* Delete Confirmation Modal */}
+			{transactionToDelete && (
+				<DeleteConfirmationModal
+					showModal={showDeleteModal}
+					closeModal={closeDeleteModal}
+					onConfirmDelete={confirmDeleteTransaction}
+					transactionType={transactionToDelete.type}
+					transactionAmount={transactionToDelete.amount}
+					transactionCategory={transactionToDelete.category}
 				/>
 			)}
 		</SafeAreaView>
