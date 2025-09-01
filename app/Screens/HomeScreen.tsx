@@ -444,11 +444,11 @@ export default function HomeScreen() {
 			)}
 
 			{showAddIncomeModal && (
-				<AddIncomeModal 
-					showModal={showAddIncomeModal} 
-					closeModal={toggleAddIncomeModal} 
+				<AddIncomeModal
+					showModal={showAddIncomeModal}
+					closeModal={toggleAddIncomeModal}
 					addIncome={handleAddIncome}
-					categories={incomeCategories} 
+					categories={incomeCategories}
 				/>
 			)}
 		</SafeAreaView>
