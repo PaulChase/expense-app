@@ -12,4 +12,5 @@ export interface AddExpenseProps {
 }
 export interface AddIncomeProps {
 	amount: string;
+	category?: string;
 }

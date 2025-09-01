@@ -8,9 +8,26 @@ import { FontAwesome5, MaterialCommunityIcons } from "@expo/vector-icons";
 import AddCategoryModal from "../Components/Modals/AddCategoryModal";
 import Toast from "react-native-toast-message";
 
-export default function CategoriesScreen() {
-	const db = SQLite.openDatabase("data.db");
+// Initialize database asynchronously
+let db: SQLite.SQLiteDatabase | null = null;
 
+const initDatabase = async () => {
+	if (!db) {
+		db = await SQLite.openDatabaseAsync("data.db");
+		await db.execAsync(`
+			CREATE TABLE IF NOT EXISTS transactions (
+				id INTEGER PRIMARY KEY AUTOINCREMENT, 
+				amount FLOAT NOT NULL, 
+				type VARCHAR(255) NOT NULL, 
+				category VARCHAR(255), 
+				date DATETIME NOT NULL
+			)
+		`);
+	}
+	return db;
+};
+
+export default function CategoriesScreen() {
 	const [categories, setCategories] = useState<string[]>([]);
 	const [expenses, setExpenses] = useState<EachTransactionItem[]>([]);
 	const [isLoading, setisLoading] = useState(false);
@@ -66,19 +83,14 @@ export default function CategoriesScreen() {
 		updateCategoriesInStorage();
 	}, [categories]);
 
-	const getExpenses = () => {
-		db.transaction((tx) => {
-			db.exec(
-				[
-					{
-						sql: "SELECT * FROM transactions WHERE type='expense'",
-						args: [],
-					},
-				],
-				false,
-				(error, results) => setExpenses(results[0].rows)
-			);
-		});
+	const getExpenses = async () => {
+		try {
+			const database = await initDatabase();
+			const result = await database.getAllAsync("SELECT * FROM transactions WHERE type='expense'");
+			setExpenses(result as EachTransactionItem[]);
+		} catch (error) {
+			console.error("Error getting expenses:", error);
+		}
 	};
 
 	useEffect(() => {
@@ -93,9 +105,9 @@ export default function CategoriesScreen() {
 		return totalExpense;
 	};
 
-	const handleOnRefresh = React.useCallback(() => {
+	const handleOnRefresh = React.useCallback(async () => {
 		setisLoading(true);
-		getExpenses();
+		await getExpenses();
 		setisLoading(false);
 	}, []);
 

@@ -6,7 +6,24 @@ import { EachTransactionItem } from "../utils/types";
 import moment from "moment";
 import TransactionItem from "../Components/TransactionItem";
 
-const db = SQLite.openDatabase("data.db");
+// Initialize database asynchronously
+let db: SQLite.SQLiteDatabase | null = null;
+
+const initDatabase = async () => {
+	if (!db) {
+		db = await SQLite.openDatabaseAsync("data.db");
+		await db.execAsync(`
+			CREATE TABLE IF NOT EXISTS transactions (
+				id INTEGER PRIMARY KEY AUTOINCREMENT, 
+				amount FLOAT NOT NULL, 
+				type VARCHAR(255) NOT NULL, 
+				category VARCHAR(255), 
+				date DATETIME NOT NULL
+			)
+		`);
+	}
+	return db;
+};
 
 export default function CalendarScreen() {
 	const [isLoading, setIsLoading] = useState(true);
@@ -17,45 +34,41 @@ export default function CalendarScreen() {
 	const [isRefreshing, setIsRefreshing] = useState(false);
 
 	useEffect(() => {
-		db.transaction(
-			(tx) => {
-				db.exec(
-					[
-						{
-							sql: "SELECT * FROM transactions",
-							args: [],
-						},
-					],
-					false,
-					(error, results) => {
-						const transactions: EachTransactionItem[] = results[0].rows;
+		const loadTransactions = async () => {
+			try {
+				const database = await initDatabase();
+				const result = await database.getAllAsync("SELECT * FROM transactions");
+				const transactions = result as EachTransactionItem[];
 
-						setTransactions(transactions);
+				setTransactions(transactions);
 
-						const markedDates = {};
-						transactions.forEach((transaction) => {
-							markedDates[transaction.date] = { marked: true };
-						});
+				const markedDates: { [key: string]: any } = {};
+				transactions.forEach((transaction) => {
+					markedDates[transaction.date] = { marked: true };
+				});
 
-						// Get the current date in YYYY-MM-DD format
-						const currentDate = moment().format("YYYY-MM-DD");
+				// Get the current date in YYYY-MM-DD format
+				const currentDate = moment().format("YYYY-MM-DD");
 
-						// Add a special marking for the current date
-						markedDates[currentDate] = { dotColor: "white", selected: true };
+				// Add a special marking for the current date
+				markedDates[currentDate] = { dotColor: "white", selected: true };
 
-						const selectedDateTransactions = transactions.filter((transaction) =>
-							moment(transaction.date).isSame(currentDate)
-						);
-
-						setFilteredTransactions(selectedDateTransactions);
-						setSelectedDate(currentDate);
-						setMarkedDates(markedDates);
-						setIsLoading(false);
-					}
+				const selectedDateTransactions = transactions.filter((transaction) =>
+					moment(transaction.date).isSame(currentDate)
 				);
-			},
-			(error) => alert(error.message)
-		);
+
+				setFilteredTransactions(selectedDateTransactions);
+				setSelectedDate(currentDate);
+				setMarkedDates(markedDates);
+				setIsLoading(false);
+			} catch (error) {
+				console.error("Error loading transactions:", error);
+				alert("Failed to load transactions");
+				setIsLoading(false);
+			}
+		};
+
+		loadTransactions();
 	}, []);
 
 	const handleSelectedDay = (day: DateData) => {

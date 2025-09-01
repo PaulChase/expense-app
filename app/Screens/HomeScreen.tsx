@@ -26,25 +26,42 @@ const DEFAULT_CATEGORIES = [
 	"Investments",
 ];
 
+const DEFAULT_INCOME_CATEGORIES = [
+	"Salary",
+	"Freelance",
+	"Business",
+	"Investments",
+	"Rental Income",
+	"Bonus",
+	"Gifts",
+	"Side Hustle",
+	"Refunds",
+	"Other Income",
+];
+
 interface CurrentMonthState {
 	income: number;
 	expense: number;
 }
 
-const db = SQLite.openDatabase("data.db");
+// Initialize database asynchronously
+let db: SQLite.SQLiteDatabase | null = null;
 
-db.transaction((tx) => {
-	db.exec(
-		[
-			{
-				sql: "CREATE TABLE IF NOT EXISTS transactions (id INTEGER PRIMARY KEY AUTOINCREMENT, amount FLOAT NOT NULL, type VARCHAR(255) NOT NULL, category VARCHAR(255), date DATETIME NOT NULL)",
-				args: [],
-			},
-		],
-		false,
-		(error, results) => console.log("done")
-	);
-});
+const initDatabase = async () => {
+	if (!db) {
+		db = await SQLite.openDatabaseAsync("data.db");
+		await db.execAsync(`
+			CREATE TABLE IF NOT EXISTS transactions (
+				id INTEGER PRIMARY KEY AUTOINCREMENT, 
+				amount FLOAT NOT NULL, 
+				type VARCHAR(255) NOT NULL, 
+				category VARCHAR(255), 
+				date DATETIME NOT NULL
+			)
+		`);
+	}
+	return db;
+};
 
 export default function HomeScreen() {
 	const [transactions, setTransactions] = useState<EachTransactionItem[]>([]);
@@ -52,6 +69,7 @@ export default function HomeScreen() {
 	const [showAddExpenseModal, setShowAddExpenseModal] = useState<boolean>(false);
 	const [showAddIncomeModal, setShowAddIncomeModal] = useState<boolean>(false);
 	const [categories, setCategories] = useState<string[]>([]);
+	const [incomeCategories, setIncomeCategories] = useState<string[]>([]);
 	const [currentMonth, setCurrentMonth] = useState<CurrentMonthState>({ income: 0, expense: 0 });
 	const [isRefreshing, setIsRefreshing] = useState(false);
 	const [runway, setRunway] = useState(0);
@@ -75,6 +93,25 @@ export default function HomeScreen() {
 		getCategoriesFromStorage();
 	}, []);
 
+	const getIncomeCategoriesFromStorage = async () => {
+		try {
+			const value = await AsyncStorage.getItem("incomeCategories");
+			if (value !== null) {
+				setIncomeCategories(JSON.parse(value));
+			} else if (value === null) {
+				// this will run for the 1st time
+				setIncomeCategories(DEFAULT_INCOME_CATEGORIES);
+			}
+		} catch (e) {
+			alert("couldn't get income categories");
+		}
+	};
+
+	// get income categories from storage
+	useEffect(() => {
+		getIncomeCategoriesFromStorage();
+	}, []);
+
 	// set the categories  in storage after its value changes
 	useEffect(() => {
 		const updateCategoriesInStorage = async () => {
@@ -87,6 +124,19 @@ export default function HomeScreen() {
 
 		updateCategoriesInStorage();
 	}, [categories]);
+
+	// set the income categories in storage after its value changes
+	useEffect(() => {
+		const updateIncomeCategoriesInStorage = async () => {
+			try {
+				await AsyncStorage.setItem("incomeCategories", JSON.stringify(incomeCategories));
+			} catch (error) {
+				alert(error);
+			}
+		};
+
+		updateIncomeCategoriesInStorage();
+	}, [incomeCategories]);
 
 	// get balance count from storage
 	useEffect(() => {
@@ -128,56 +178,60 @@ export default function HomeScreen() {
 
 	// get recent transactions
 	useEffect(() => {
-		db.transaction((tx) => {
-			db.exec(
-				[
-					{
-						sql: "SELECT * FROM transactions ORDER BY id DESC LIMIT 5",
-						args: [],
-					},
-				],
-				false,
-				(error, results) => setTransactions(results[0].rows)
-			);
-		});
+		const getRecentTransactions = async () => {
+			try {
+				const database = await initDatabase();
+				const result = await database.getAllAsync("SELECT * FROM transactions ORDER BY id DESC LIMIT 5");
+				setTransactions(result as EachTransactionItem[]);
+			} catch (error) {
+				console.error("Error fetching transactions:", error);
+			}
+		};
+
+		getRecentTransactions();
 	}, []);
 
 	// get this month expense
-	const getThisMonthExpenses = () => {
-		db.transaction((tx) => {
-			db.exec(
-				[
-					{
-						sql: "SELECT SUM(amount) AS total_expenses FROM transactions WHERE  type = 'expense' AND strftime('%Y-%m', date) = strftime('%Y-%m', 'now')",
-						args: [],
-					},
-				],
-				false,
-				(error, results) => setCurrentMonth((prev) => ({ ...prev, expense: results[0].rows[0].total_expenses }))
-			);
-		});
+	const getThisMonthExpenses = async () => {
+		try {
+			const database = await initDatabase();
+			const result = (await database.getFirstAsync(
+				"SELECT SUM(amount) AS total_expenses FROM transactions WHERE type = 'expense' AND strftime('%Y-%m', date) = strftime('%Y-%m', 'now')"
+			)) as { total_expenses: number | null };
+
+			setCurrentMonth((prev) => ({
+				...prev,
+				expense: result?.total_expenses || 0,
+			}));
+		} catch (error) {
+			console.error("Error getting month expenses:", error);
+		}
 	};
 
 	// get this month Income
-	const getThisMonthIncome = () => {
-		// get this month income
-		db.transaction((tx) => {
-			db.exec(
-				[
-					{
-						sql: "SELECT SUM(amount) AS total_income FROM transactions WHERE  type = 'income' AND strftime('%Y-%m', date) = strftime('%Y-%m', 'now')",
-						args: [],
-					},
-				],
-				false,
-				(error, results) => setCurrentMonth((prev) => ({ ...prev, income: results[0].rows[0].total_income }))
-			);
-		});
+	const getThisMonthIncome = async () => {
+		try {
+			const database = await initDatabase();
+			const result = (await database.getFirstAsync(
+				"SELECT SUM(amount) AS total_income FROM transactions WHERE type = 'income' AND strftime('%Y-%m', date) = strftime('%Y-%m', 'now')"
+			)) as { total_income: number | null };
+
+			setCurrentMonth((prev) => ({
+				...prev,
+				income: result?.total_income || 0,
+			}));
+		} catch (error) {
+			console.error("Error getting month income:", error);
+		}
 	};
 
 	useEffect(() => {
-		getThisMonthExpenses();
-		getThisMonthIncome();
+		const loadMonthlyData = async () => {
+			await getThisMonthExpenses();
+			await getThisMonthIncome();
+		};
+
+		loadMonthlyData();
 	}, [balance]);
 
 	const calculateRunway = () => {
@@ -220,92 +274,86 @@ export default function HomeScreen() {
 
 	const toggleAddIncomeModal = () => setShowAddIncomeModal((prev) => !prev);
 
-	const handleAddExpense = (expense: AddExpenseProps) => {
+	const handleAddExpense = async (expense: AddExpenseProps) => {
 		const newBalance = balance - parseInt(expense.amount);
 
 		if (newBalance < 0) {
 			return alert("How did you spend more than what than your current balance? \n 🙄🙄");
 		}
 
-		db.transaction(
-			(tx) => {
-				db.exec(
-					[
-						{
-							sql: "INSERT INTO transactions (amount, type, category, date) VALUES (?, ?, ?, ?)",
-							args: [parseInt(expense.amount), "expense", expense.category, new Date().toISOString().split("T")[0]],
-						},
-					],
-					false,
-					(error, results) => {
-						setTransactions((prev) => [
-							{
-								id: results[0].insertId,
-								amount: parseInt(expense.amount),
-								type: "expense",
-								category: expense.category,
-								date: new Date().toISOString().split("T")[0],
-							},
-							...prev,
-						]);
-					}
-				);
-			},
-			(error) => alert(error),
-			() => {
-				setBalance(newBalance);
-				toggleAddExpenseModal();
-				Toast.show({
-					type: "success",
-					text1: "Great Job 👍",
-					text2: "Expense recorded successfully",
-				});
-			}
-		);
+		try {
+			const database = await initDatabase();
+			const result = await database.runAsync(
+				"INSERT INTO transactions (amount, type, category, date) VALUES (?, ?, ?, ?)",
+				[parseInt(expense.amount), "expense", expense.category, new Date().toISOString().split("T")[0]]
+			);
+
+			// Update transactions state
+			setTransactions((prev) => [
+				{
+					id: result.lastInsertRowId,
+					amount: parseInt(expense.amount),
+					type: "expense",
+					category: expense.category,
+					date: new Date().toISOString().split("T")[0],
+				},
+				...prev,
+			]);
+
+			// Update balance and close modal
+			setBalance(newBalance);
+			toggleAddExpenseModal();
+			Toast.show({
+				type: "success",
+				text1: "Great Job 👍",
+				text2: "Expense recorded successfully",
+			});
+		} catch (error) {
+			console.error("Error adding expense:", error);
+			alert("Failed to add expense. Please try again.");
+		}
 	};
 
-	const handleAddIncome = (income: AddIncomeProps) => {
-		db.transaction(
-			(tx) => {
-				db.exec(
-					[
-						{
-							sql: "INSERT INTO transactions (amount, type, date) VALUES (?, ?, ?)",
-							args: [parseInt(income.amount), "income", new Date().toISOString().split("T")[0]],
-						},
-					],
-					false,
-					(error, results) => {
-						setTransactions((prev) => [
-							{
-								id: results[0].insertId,
-								amount: parseInt(income.amount),
-								type: "income",
-								date: new Date().toISOString().split("T")[0],
-							},
-							...prev,
-						]);
-					}
-				);
-			},
-			(error) => alert(error),
-			() => {
-				setBalance((prev) => parseInt(prev) + parseInt(income.amount));
-				toggleAddIncomeModal();
-				Toast.show({
-					type: "success",
-					text1: "Great Job 👍",
-					text2: "Income recorded successfully",
-				});
-			}
-		);
+	const handleAddIncome = async (income: AddIncomeProps) => {
+		try {
+			const database = await initDatabase();
+			const result = await database.runAsync(
+				"INSERT INTO transactions (amount, type, category, date) VALUES (?, ?, ?, ?)",
+				[parseInt(income.amount), "income", income.category || null, new Date().toISOString().split("T")[0]]
+			);
+
+			// Update transactions state
+			setTransactions((prev) => [
+				{
+					id: result.lastInsertRowId,
+					amount: parseInt(income.amount),
+					type: "income",
+					category: income.category,
+					date: new Date().toISOString().split("T")[0],
+				},
+				...prev,
+			]);
+
+			// Update balance and close modal
+			setBalance((prev) => prev + parseInt(income.amount));
+			toggleAddIncomeModal();
+			Toast.show({
+				type: "success",
+				text1: "Great Job 👍",
+				text2: "Income recorded successfully",
+			});
+		} catch (error) {
+			console.error("Error adding income:", error);
+			alert("Failed to add income. Please try again.");
+		}
 	};
 
-	const handleOnRefresh = () => {
+	const handleOnRefresh = async () => {
 		setIsRefreshing(true);
-		getCategoriesFromStorage();
-		getThisMonthExpenses();
-		getThisMonthIncome();
+		await getCategoriesFromStorage();
+		await getIncomeCategoriesFromStorage();
+		await getThisMonthExpenses();
+		await getThisMonthIncome();
 		setIsRefreshing(false);
 	};
 
@@ -396,7 +444,12 @@ export default function HomeScreen() {
 			)}
 
 			{showAddIncomeModal && (
-				<AddIncomeModal showModal={showAddIncomeModal} closeModal={toggleAddIncomeModal} addIncome={handleAddIncome} />
+				<AddIncomeModal 
+					showModal={showAddIncomeModal} 
+					closeModal={toggleAddIncomeModal} 
+					addIncome={handleAddIncome}
+					categories={incomeCategories} 
+				/>
 			)}
 		</SafeAreaView>
 	);

@@ -2,25 +2,34 @@ import React, { useContext, useState } from "react";
 import { Modal, StyleSheet, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { AddIncomeProps } from "../../utils/types";
+import ModalSelector from "react-native-modal-selector";
 
 interface AddIncomeModalProps {
 	showModal: boolean;
+	categories: string[];
 	closeModal: () => void;
-	addIncome: (expense: AddIncomeProps) => void;
+	addIncome: (income: AddIncomeProps) => void;
 }
 
-export default function AddIncomeModal({ showModal, closeModal, addIncome }: AddIncomeModalProps) {
+export default function AddIncomeModal({ showModal, closeModal, categories, addIncome }: AddIncomeModalProps) {
 	const [amount, setAmount] = useState("");
+	const [category, setCategory] = useState("");
 
 	const handleAddIncome = () => {
-		addIncome({ amount });
+		addIncome({ amount, category: category || undefined });
+	};
+
+	const handleCloseModal = () => {
+		setAmount("");
+		setCategory("");
+		closeModal();
 	};
 
 	return (
-		<Modal animationType="slide" transparent={true} visible={showModal} onRequestClose={closeModal}>
+		<Modal animationType="slide" transparent={true} visible={showModal} onRequestClose={handleCloseModal}>
 			<View className=" flex-1 bg-black/80 justify-center items-center px-4">
 				<View className="  bg-white rounded-lg w-full p-4">
-					<TouchableOpacity activeOpacity={0.6} onPress={closeModal}>
+					<TouchableOpacity activeOpacity={0.6} onPress={handleCloseModal}>
 						<View className=" flex-row justify-end mb-3">
 							<Ionicons name="close-circle-outline" size={28} color="gray" />
 						</View>
@@ -30,10 +39,32 @@ export default function AddIncomeModal({ showModal, closeModal, addIncome }: Add
 					<TextInput
 						value={amount}
 						className="px-2 py-3 bg-gray-100 rounded-md border border-gray-200 "
-						placeholder={"amount"}
+						placeholder={"Amount"}
 						onChangeText={setAmount}
 						keyboardType="phone-pad"
 					/>
+
+					<ModalSelector
+						data={categories.sort((a, b) => a.localeCompare(b)).map((category) => ({ id: category, label: category }))}
+						keyExtractor={(item) => item.id}
+						style={{ marginTop: 18 }}
+						onChange={(option) => {
+							setCategory(option.label);
+						}}
+						header={
+							<View style={{ padding: 16, alignItems: "center" }}>
+								<Text style={{ fontSize: 16, color: "black" }}>What category is this income from?</Text>
+							</View>
+						}
+						overlayStyle={{ flex: 1, padding: "5%", justifyContent: "flex-end", backgroundColor: "rgba(0,0,0,0.7)" }}
+					>
+						<TextInput
+							style={{ borderWidth: 1, borderColor: "#ccc", padding: 10, borderRadius: 6, color: "gray" }}
+							editable={false}
+							placeholder="Select category (optional)..."
+							value={category}
+						/>
+					</ModalSelector>
 
 					<TouchableOpacity
 						activeOpacity={0.6}
