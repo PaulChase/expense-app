@@ -13,6 +13,7 @@ import {
 import HomeScreen from "./app/Screens/HomeScreen";
 import CategoriesScreen from "./app/Screens/CategoriesScreen";
 import CalendarScreen from "./app/Screens/CalendarScreen";
+import TransactionsScreen from "./app/Screens/TransactionsScreen";
 import Toast from "react-native-toast-message";
 import { useEffect, useState } from "react";
 import OnboardingScreen from "./app/Screens/OnboardingScreen";
@@ -61,6 +62,8 @@ export default function App() {
 									return <Ionicons name="home" size={24} color={color} />;
 								case "Bills":
 									return <AntDesign name="tags" size={24} color={color} />;
+								case "Transactions":
+									return <MaterialIcons name="receipt-long" size={24} color={color} />;
 								case "Calendar":
 									return <Entypo name="calendar" size={24} color={color} />;
 							}
@@ -83,6 +86,7 @@ export default function App() {
 				>
 					<Tab.Screen name="Home" component={HomeScreen} />
 					<Tab.Screen name="Bills" component={CategoriesScreen} />
+					<Tab.Screen name="Transactions" component={TransactionsScreen} />
 					<Tab.Screen name="Calendar" component={CalendarScreen} />
 				</Tab.Navigator>
 			</NavigationContainer>

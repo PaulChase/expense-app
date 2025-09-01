@@ -393,7 +393,7 @@ export default function HomeScreen() {
 						<Text className="text-blue-600 text-3xl font-bold">₦ {formatNumberInThousand(runway)}</Text>
 					</View>
 
-					<View className="flex flex-row justify-between items-center mt-8 mb-4">
+					<View className="flex flex-row justify-between items-center mt-8 ">
 						<Text className="font-bold text-xl text-gray-800">Recent Transactions</Text>
 					</View>
 
