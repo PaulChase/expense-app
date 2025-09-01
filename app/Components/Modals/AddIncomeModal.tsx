@@ -14,14 +14,16 @@ interface AddIncomeModalProps {
 export default function AddIncomeModal({ showModal, closeModal, categories, addIncome }: AddIncomeModalProps) {
 	const [amount, setAmount] = useState("");
 	const [category, setCategory] = useState("");
+	const [description, setDescription] = useState("");
 
 	const handleAddIncome = () => {
-		addIncome({ amount, category: category || undefined });
+		addIncome({ amount, category: category || undefined, description: description.trim() || undefined });
 	};
 
 	const handleCloseModal = () => {
 		setAmount("");
 		setCategory("");
+		setDescription("");
 		closeModal();
 	};
 
@@ -65,6 +67,15 @@ export default function AddIncomeModal({ showModal, closeModal, categories, addI
 							value={category}
 						/>
 					</ModalSelector>
+
+					<TextInput
+						value={description}
+						className="px-2 py-3 bg-gray-100 rounded-md border border-gray-200 mt-4"
+						placeholder="Description (optional)"
+						onChangeText={setDescription}
+						multiline={true}
+						numberOfLines={2}
+					/>
 
 					<TouchableOpacity
 						activeOpacity={0.6}

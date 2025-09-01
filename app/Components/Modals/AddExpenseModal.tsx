@@ -14,16 +14,24 @@ interface AddExpenseModalProps {
 export default function AddExpenseModal({ showModal, closeModal, categories, addExpense }: AddExpenseModalProps) {
 	const [amount, setAmount] = useState("");
 	const [category, setCategory] = useState("");
+	const [description, setDescription] = useState("");
 
 	const handleAddExpense = () => {
-		addExpense({ amount, category });
+		addExpense({ amount, category, description: description.trim() || undefined });
+	};
+
+	const handleCloseModal = () => {
+		setAmount("");
+		setCategory("");
+		setDescription("");
+		closeModal();
 	};
 
 	return (
-		<Modal animationType="slide" transparent={true} visible={showModal} onRequestClose={closeModal}>
+		<Modal animationType="slide" transparent={true} visible={showModal} onRequestClose={handleCloseModal}>
 			<View className=" flex-1 bg-black/80 justify-center items-center px-4">
 				<View className="  bg-white rounded-lg w-full p-4">
-					<TouchableOpacity activeOpacity={0.6} onPress={closeModal}>
+					<TouchableOpacity activeOpacity={0.6} onPress={handleCloseModal}>
 						<View className=" flex-row justify-end mb-3">
 							<Ionicons name="close-circle-outline" size={28} color="gray" />
 						</View>
@@ -59,6 +67,15 @@ export default function AddExpenseModal({ showModal, closeModal, categories, add
 							value={category}
 						/>
 					</ModalSelector>
+
+					<TextInput
+						value={description}
+						className="px-2 py-3 bg-gray-100 rounded-md border border-gray-200 mt-4"
+						placeholder="Description (optional)"
+						onChangeText={setDescription}
+						multiline={true}
+						numberOfLines={2}
+					/>
 
 					<TouchableOpacity
 						activeOpacity={0.6}

@@ -43,9 +43,18 @@ const initDatabase = async () => {
 				amount FLOAT NOT NULL, 
 				type VARCHAR(255) NOT NULL, 
 				category VARCHAR(255), 
-				date DATETIME NOT NULL
+				date DATETIME NOT NULL,
+				description TEXT
 			)
 		`);
+
+		// Add description column if it doesn't exist (for existing databases)
+		try {
+			await db.execAsync(`ALTER TABLE transactions ADD COLUMN description TEXT`);
+		} catch (error) {
+			// Column might already exist, ignore error
+			console.log("Description column might already exist:", error);
+		}
 	}
 	return db;
 };
@@ -238,8 +247,14 @@ export default function HomeScreen() {
 		try {
 			const database = await initDatabase();
 			const result = await database.runAsync(
-				"INSERT INTO transactions (amount, type, category, date) VALUES (?, ?, ?, ?)",
-				[parseInt(expense.amount), "expense", expense.category, new Date().toISOString().split("T")[0]]
+				"INSERT INTO transactions (amount, type, category, date, description) VALUES (?, ?, ?, ?, ?)",
+				[
+					parseInt(expense.amount),
+					"expense",
+					expense.category,
+					new Date().toISOString().split("T")[0],
+					expense.description || null,
+				]
 			);
 
 			// Update transactions state
@@ -250,6 +265,7 @@ export default function HomeScreen() {
 					type: "expense",
 					category: expense.category,
 					date: new Date().toISOString().split("T")[0],
+					description: expense.description,
 				},
 				...prev,
 			]);
@@ -272,8 +288,14 @@ export default function HomeScreen() {
 		try {
 			const database = await initDatabase();
 			const result = await database.runAsync(
-				"INSERT INTO transactions (amount, type, category, date) VALUES (?, ?, ?, ?)",
-				[parseInt(income.amount), "income", income.category || null, new Date().toISOString().split("T")[0]]
+				"INSERT INTO transactions (amount, type, category, date, description) VALUES (?, ?, ?, ?, ?)",
+				[
+					parseInt(income.amount),
+					"income",
+					income.category || null,
+					new Date().toISOString().split("T")[0],
+					income.description || null,
+				]
 			);
 
 			// Update transactions state
@@ -284,6 +306,7 @@ export default function HomeScreen() {
 					type: "income",
 					category: income.category,
 					date: new Date().toISOString().split("T")[0],
+					description: income.description,
 				},
 				...prev,
 			]);

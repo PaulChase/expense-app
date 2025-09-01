@@ -8,6 +8,7 @@ interface Transaction {
 	amount: number;
 	date: string;
 	category?: string;
+	description?: string;
 }
 
 interface TransactionItemProps {
@@ -55,9 +56,16 @@ export default function TransactionItem({ transaction, showDate = true }: Transa
 					{/* Transaction Details */}
 					<View className="flex-1">
 						<View className="flex flex-row items-center justify-between">
-							<Text className="text-gray-800 font-semibold text-base">
-								{transaction.category || (isIncome ? "Income" : "Expense")}
-							</Text>
+							<View className="flex-1">
+								<Text className="text-gray-800 font-semibold text-base">
+									{transaction.category || (isIncome ? "Income" : "Expense")}
+								</Text>
+								{transaction.description && (
+									<Text className="text-gray-500 text-sm mt-1" numberOfLines={2}>
+										{transaction.description}
+									</Text>
+								)}
+							</View>
 							<Text className={`font-bold text-lg ${isIncome ? "text-green-600" : "text-red-600"}`}>
 								{isIncome ? "+" : "-"}₦ {formatNumberInThousand(transaction.amount)}
 							</Text>
