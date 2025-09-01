@@ -74,8 +74,6 @@ export default function App() {
 							height: 50,
 							borderTopWidth: 1,
 							borderTopColor: "gray",
-							borderTopLeftRadius: 20,
-							borderTopRightRadius: 20,
 						},
 						headerShown: true,
 						tabBarShowLabel: false,
