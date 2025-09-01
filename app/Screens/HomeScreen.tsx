@@ -26,19 +26,6 @@ const DEFAULT_CATEGORIES = [
 	"Investments",
 ];
 
-const DEFAULT_INCOME_CATEGORIES = [
-	"Salary",
-	"Freelance",
-	"Business",
-	"Investments",
-	"Rental Income",
-	"Bonus",
-	"Gifts",
-	"Side Hustle",
-	"Refunds",
-	"Other Income",
-];
-
 interface CurrentMonthState {
 	income: number;
 	expense: number;
@@ -69,7 +56,6 @@ export default function HomeScreen() {
 	const [showAddExpenseModal, setShowAddExpenseModal] = useState<boolean>(false);
 	const [showAddIncomeModal, setShowAddIncomeModal] = useState<boolean>(false);
 	const [categories, setCategories] = useState<string[]>([]);
-	const [incomeCategories, setIncomeCategories] = useState<string[]>([]);
 	const [currentMonth, setCurrentMonth] = useState<CurrentMonthState>({ income: 0, expense: 0 });
 	const [isRefreshing, setIsRefreshing] = useState(false);
 	const [runway, setRunway] = useState(0);
@@ -93,25 +79,6 @@ export default function HomeScreen() {
 		getCategoriesFromStorage();
 	}, []);
 
-	const getIncomeCategoriesFromStorage = async () => {
-		try {
-			const value = await AsyncStorage.getItem("incomeCategories");
-			if (value !== null) {
-				setIncomeCategories(JSON.parse(value));
-			} else if (value === null) {
-				// this will run for the 1st time
-				setIncomeCategories(DEFAULT_INCOME_CATEGORIES);
-			}
-		} catch (e) {
-			alert("couldn't get income categories");
-		}
-	};
-
-	// get income categories from storage
-	useEffect(() => {
-		getIncomeCategoriesFromStorage();
-	}, []);
-
 	// set the categories  in storage after its value changes
 	useEffect(() => {
 		const updateCategoriesInStorage = async () => {
@@ -124,19 +91,6 @@ export default function HomeScreen() {
 
 		updateCategoriesInStorage();
 	}, [categories]);
-
-	// set the income categories in storage after its value changes
-	useEffect(() => {
-		const updateIncomeCategoriesInStorage = async () => {
-			try {
-				await AsyncStorage.setItem("incomeCategories", JSON.stringify(incomeCategories));
-			} catch (error) {
-				alert(error);
-			}
-		};
-
-		updateIncomeCategoriesInStorage();
-	}, [incomeCategories]);
 
 	// get balance count from storage
 	useEffect(() => {
@@ -351,7 +305,6 @@ export default function HomeScreen() {
 	const handleOnRefresh = async () => {
 		setIsRefreshing(true);
 		await getCategoriesFromStorage();
-		await getIncomeCategoriesFromStorage();
 		await getThisMonthExpenses();
 		await getThisMonthIncome();
 		setIsRefreshing(false);
@@ -361,75 +314,101 @@ export default function HomeScreen() {
 		<SafeAreaView>
 			<View className="relative">
 				<ScrollView
-					className=" p-4 min-h-screen"
+					className=" p-4 min-h-screen bg-gray-50"
 					refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={handleOnRefresh} />}
 				>
-					<View className=" p-3 bg-white border-l-4 border-blue-700 rounded-md">
-						<Text className=" text-lg font-semibold">Balance</Text>
-						<Text className=" text-3xl text-blue-700 font-extrabold mt-2">₦ {formatNumberInThousand(balance)}</Text>
+					<View className="bg-white p-5 rounded-2xl flex-1 shadow-sm border border-gray-100">
+						<View className="flex flex-row items-center mb-3 space-x-2">
+							<View className="bg-orange-100 p-3 rounded-full">
+								<MaterialCommunityIcons name="wallet" size={26} color="#D33200" />
+							</View>
+							<Text className="text-gray-500 text-base font-medium">Total Balance</Text>
+						</View>
+						<Text className="text-orange-700 text-2xl font-bold">₦ {formatNumberInThousand(balance)}</Text>
 					</View>
 
-					<View className="flex flex-row justify-between  items-center mt-6">
-						<Text className=" font-semibold  text-lg">This Month</Text>
+					<View className="flex flex-row justify-between items-center mt-8 mb-4">
+						<Text className="font-bold text-xl text-gray-800">This Month</Text>
 					</View>
 
-					<View className=" flex flex-row items-center mt-2">
-						<View className=" p-3 bg-white border-l-4 border-blue-700 rounded-md flex-1 mr-2">
-							<Text className=" text-lg font-semibold text-gray-500">Income</Text>
-							<Text className=" text-3xl text-green-600 font-extrabold mt-2">
+					{/* Income & Expense Cards */}
+					<View className="flex flex-row items-center gap-3">
+						<View className="bg-white p-5 rounded-2xl flex-1 shadow-sm border border-gray-100">
+							<View className="flex flex-row items-center justify-between mb-3">
+								<View className="bg-green-100 p-2 rounded-full">
+									<MaterialCommunityIcons name="trending-up" size={20} color="#059669" />
+								</View>
+								<Text className="text-gray-500 text-sm font-medium">Income</Text>
+							</View>
+							<Text className="text-green-600 text-2xl font-bold">
 								₦ {formatNumberInThousand(currentMonth?.income)}
 							</Text>
 						</View>
-						<View className=" p-3 bg-white border-l-4 border-blue-700 rounded-md flex-1 ml-2">
-							<Text className=" text-lg font-semibold text-gray-500">Expense</Text>
-							<Text className=" text-3xl text-red-700 font-extrabold mt-2">
-								₦ {formatNumberInThousand(currentMonth?.expense)}
-							</Text>
+
+						<View className="bg-white p-5 rounded-2xl flex-1 shadow-sm border border-gray-100">
+							<View className="flex flex-row items-center justify-between mb-3">
+								<View className="bg-red-100 p-2 rounded-full">
+									<MaterialCommunityIcons name="trending-down" size={20} color="#DC2626" />
+								</View>
+								<Text className="text-gray-500 text-sm font-medium">Expense</Text>
+							</View>
+							<Text className="text-red-600 text-2xl font-bold">₦ {formatNumberInThousand(currentMonth?.expense)}</Text>
 						</View>
 					</View>
 
-					<View className=" p-3 bg-white border-l-4 border-blue-700 rounded-md mt-6">
-						<Text className=" text-lg font-semibold">Runway</Text>
-						<Text className=" text-gray-500 mt-1 mb-2">
-							This is your daily spending limit to ensure you have enough to cover your needs until the end of the
-							month.
+					{/* Runway Card */}
+					<View className="bg-white p-6 rounded-2xl mt-6 shadow-sm border border-gray-100">
+						<View className="flex flex-row items-center justify-between mb-3">
+							<Text className="text-gray-800 text-lg font-semibold">Daily Budget</Text>
+							<View className="bg-blue-100 p-2 rounded-full">
+								<MaterialCommunityIcons name="calendar-clock" size={20} color="#2563EB" />
+							</View>
+						</View>
+						<Text className="text-gray-600 text-sm leading-5 mb-4">
+							Your recommended daily spending limit to last until month-end
 						</Text>
-						<Text className=" text-3xl text-blue-700 font-extrabold mt-2">₦ {formatNumberInThousand(runway)}</Text>
+						<Text className="text-blue-600 text-3xl font-bold">₦ {formatNumberInThousand(runway)}</Text>
 					</View>
 
-					<View className="flex flex-row justify-between  items-center mt-6">
-						<Text className=" font-semibold  text-lg">Recent Transactions</Text>
-						{/* <Pressable onPress={test}>
-							<Ionicons name="reload" size={20} color="gray" />
-						</Pressable> */}
+					<View className="flex flex-row justify-between items-center mt-8 mb-4">
+						<Text className="font-bold text-xl text-gray-800">Recent Transactions</Text>
 					</View>
 
-					<View className=" pb-80">
-						{transactions.map((transaction) => (
-							<TransactionItem transaction={transaction} key={transaction.id} />
-						))}
+					<View className="pb-80">
+						{transactions.length > 0 ? (
+							transactions.map((transaction) => <TransactionItem transaction={transaction} key={transaction.id} />)
+						) : (
+							<View className="bg-white p-6 rounded-2xl items-center shadow-sm border border-gray-100">
+								<MaterialCommunityIcons name="history" size={48} color="#9CA3AF" />
+								<Text className="text-gray-500 text-center mt-3 text-base">No transactions yet</Text>
+								<Text className="text-gray-400 text-center text-sm">Start by adding your first income or expense</Text>
+							</View>
+						)}
 					</View>
 				</ScrollView>
 
+				{/* Modern Floating Action Buttons */}
 				{/* floting buttons */}
 				<View
 					style={{ elevation: 10 }}
 					className=" flex flex-row items-center justify-evenly absolute left-0 bottom-5 w-full z-50 pb-32"
 				>
 					<TouchableOpacity
-						activeOpacity={0.7}
+						activeOpacity={0.8}
 						onPress={toggleAddIncomeModal}
-						className=" bg-green-700 h-16 w-16 flex items-center justify-center rounded-full"
+						className="bg-green-600 h-16 w-16 flex items-center justify-center rounded-full shadow-lg"
+						style={{ elevation: 8 }}
 					>
-						<FontAwesome5 name="plus" size={20} color="white" />
+						<MaterialCommunityIcons name="plus" size={24} color="white" />
 					</TouchableOpacity>
 
 					<TouchableOpacity
-						activeOpacity={0.7}
+						activeOpacity={0.8}
 						onPress={toggleAddExpenseModal}
-						className=" bg-red-700 h-16 w-16 flex items-center justify-center rounded-full"
+						className="bg-red-600 h-16 w-16 flex items-center justify-center rounded-full shadow-lg"
+						style={{ elevation: 8 }}
 					>
-						<FontAwesome5 name="minus" size={20} color="white" />
+						<MaterialCommunityIcons name="minus" size={24} color="white" />
 					</TouchableOpacity>
 				</View>
 			</View>
@@ -448,7 +427,7 @@ export default function HomeScreen() {
 					showModal={showAddIncomeModal}
 					closeModal={toggleAddIncomeModal}
 					addIncome={handleAddIncome}
-					categories={incomeCategories}
+					categories={categories}
 				/>
 			)}
 		</SafeAreaView>
